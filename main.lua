@@ -1,10 +1,9 @@
--- AUTO BUY APART V3 - RINGAN + TANPA NOTIF
+-- AUTO BUY APART V5 - AUTO HOLD E LANGSUNG
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
--- ===== KONFIGURASI =====
 local SPEED = 120
 local ALT_OFFSET = -8
 
@@ -19,38 +18,33 @@ local coords = {
 
 local isRunning = false
 
--- ===== GERAK CEPAT KE KOORDINAT =====
+-- ===== GERAK CEPAT =====
 local function goTo(pos)
     local start = root.Position
     local bawah = Vector3.new(pos.X, pos.Y - 1, pos.Z)
     local targetBawah = Vector3.new(pos.X, pos.Y + ALT_OFFSET, pos.Z)
-    
-    -- Turun dulu
+
     root.CFrame = CFrame.new(bawah)
-    task.wait(0.05)
-    
-    -- Pindah cepat ke bawah tanah
+    task.wait(0.03)
+
     humanoid.WalkSpeed = SPEED
     for i = 1, 20 do
-        local t = i / 20
-        root.CFrame = CFrame.new(start:Lerp(targetBawah, t))
-        task.wait(0.02)
+        root.CFrame = CFrame.new(start:Lerp(targetBawah, i/20))
+        task.wait(0.015)
     end
-    
-    -- Naik ke posisi sebenarnya
+
     for i = 1, 8 do
-        local t = i / 8
-        local naik = Vector3.new(pos.X, targetBawah.Y + (pos.Y - targetBawah.Y) * t, pos.Z)
+        local naik = Vector3.new(pos.X, targetBawah.Y + (pos.Y - targetBawah.Y) * (i/8), pos.Z)
         root.CFrame = CFrame.new(naik)
-        task.wait(0.02)
+        task.wait(0.015)
     end
-    
+
     root.CFrame = CFrame.new(pos)
     humanoid.WalkSpeed = 16
 end
 
--- ===== CEK APART KOSONG =====
-local function getAvailable(pos)
+-- ===== CEK PROMPT =====
+local function getPrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") then
             local parent = p.Parent
@@ -69,14 +63,25 @@ end
 
 -- ===== PROSES BELI =====
 local function buy()
-    for _, pos in ipairs(coords) do
-        local part, prompt = getAvailable(pos)
+    for i, pos in ipairs(coords) do
+        local part, prompt = getPrompt(pos)
+
         if part and prompt then
-            goTo(part.Position + Vector3.new(0, 2, 0))
+            -- Teleport ke depan part (dekat prompt)
+            local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
+            goTo(targetPos)
             task.wait(0.3)
-            prompt:Hold(1)
+
+            -- Hold E lebih lama
+            prompt:Hold(1.5)
             task.wait(0.5)
+
+            -- Opsional: fire langsung biar mantap
+            -- prompt:InputHoldBegin() 
+            -- task.wait(0.5)
+            -- prompt:InputHoldEnd()
         end
+        -- kalau tidak ada prompt, lewati diam-diam
     end
     isRunning = false
 end
@@ -108,5 +113,5 @@ btn.Parent = frame
 btn.MouseButton1Click:Connect(function()
     if isRunning then return end
     isRunning = true
-    buy()
+    pcall(buy)
 end)
