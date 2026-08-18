@@ -1,4 +1,4 @@
--- AUTO FARM + BYPASS SUPER (Tahan Anti-Cheat)
+-- AUTO FARM TANPA UI (GERAK ALAMI + BYPASS MINIMAL)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -21,9 +21,8 @@ local jumlahPaket = 1
 local siklus = 0
 local pengeluaran = 0
 local pendapatan = 0
-local startTime = 0
 
--- ===== HAPUS GUI LAMA =====
+-- ===== HAPUS SEMUA UI =====
 for _, gui in pairs(player.PlayerGui:GetChildren()) do
     if gui:IsA("ScreenGui") then gui:Destroy() end
 end
@@ -33,9 +32,8 @@ local function notif(title, text)
     game.StarterGui:SetCore("SendNotification", {Title = title, Text = text, Duration = 4})
 end
 
--- ===== BYPASS SUPER =====
-local function bypassSuper()
-    -- Bypass deteksi CFrame & WalkSpeed
+-- ===== BYPASS MINIMAL (WALKSPEED) =====
+local function bypassWalkSpeed()
     local oldIndex
     oldIndex = hookmetamethod(game, "__index", function(self, key)
         if key == "WalkSpeed" and self == humanoid then
@@ -43,28 +41,8 @@ local function bypassSuper()
         end
         return oldIndex(self, key)
     end)
-    
-    -- Bypass deteksi Health (biar mati ga dicurigai)
-    local oldHealth
-    oldHealth = hookmetamethod(humanoid, "__newindex", function(self, key, value)
-        if key == "Health" and value == 0 then
-            return
-        end
-        return oldHealth(self, key, value)
-    end)
-    
-    -- Bypass RemoteEvent (spam sinyal normal)
-    local rs = game:GetService("ReplicatedStorage")
-    for _, v in pairs(rs:GetDescendants()) do
-        if v:IsA("RemoteEvent") then
-            local oldFire
-            oldFire = hookmetamethod(v, "FireServer", function(self, ...)
-                return oldFire(self, ...)
-            end)
-        end
-    end
 end
-task.spawn(bypassSuper)
+task.spawn(bypassWalkSpeed)
 
 -- ===== ANTI-AFK =====
 local function antiAFK()
@@ -76,31 +54,24 @@ local function antiAFK()
 end
 task.spawn(antiAFK)
 
--- ===== RESPAWN HALUS (TANPA MATI PAKSA) =====
-local function smoothRespawn(targetPos)
-    -- Mati alami (dengan delay acak biar ga ketahuan)
-    local delayTime = math.random(3, 7)
-    task.wait(delayTime)
-    
-    humanoid.Health = 0
-    
-    -- Tunggu respawn alami
-    local newChar = player.CharacterAdded:Wait()
-    character = newChar
-    humanoid = character:WaitForChild("Humanoid")
-    root = character:WaitForChild("HumanoidRootPart")
-    
-    -- Pindah ke target setelah respawn (dengan delay kecil)
-    task.wait(0.5)
-    root.CFrame = CFrame.new(targetPos)
-    
-    -- Noclip sementara
+-- ===== GERAK HALUS (MOVETO) =====
+local function walkTo(pos)
+    humanoid.WalkSpeed = 12
+    humanoid:MoveTo(pos)
+    while (root.Position - pos).Magnitude > 5 do
+        task.wait(0.1)
+    end
+    humanoid.WalkSpeed = 16
+end
+
+-- ===== NOCLIP SEMENTARA (UNTUK TEMBUS) =====
+local function noclipTemp()
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             v.CanCollide = false
         end
     end
-    task.wait(0.3)
+    task.wait(0.2)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             v.CanCollide = true
@@ -200,7 +171,8 @@ local function buyApartment()
         local part, prompt = getPurchasePrompt(pos)
         if part and prompt then
             local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
-            smoothRespawn(target)
+            walkTo(target)
+            noclipTemp()
             prompt:Hold(1.5)
             pengeluaran = pengeluaran + 500
             return true
@@ -211,7 +183,8 @@ end
 
 -- ===== BELI BAHAN =====
 local function buyMaterials(amount)
-    smoothRespawn(NPC_COORD)
+    walkTo(NPC_COORD)
+    noclipTemp()
     pressE()
     clickDialog()
     clickItem("Gelatin") clickAmount(amount)
@@ -226,7 +199,6 @@ end
 local function startFarm()
     if isRunning then return end
     isRunning = true
-    startTime = os.time()
     notif("🔥", "Auto Farm dimulai!")
     while isRunning do
         siklus = siklus + 1
@@ -242,101 +214,20 @@ local function stopFarm()
     notif("⏹️", "Auto Farm dihentikan!")
 end
 
--- ===== UI SIMPLE =====
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AF"
-screenGui.Parent = player.PlayerGui
-
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 120)
-frame.Position = UDim2.new(0.5, -100, 0.5, -60)
-frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 0.3
-frame.BorderSizePixel = 0
-frame.Active = true
-frame.Draggable = true
-frame.Parent = screenGui
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 180, 0, 25)
-title.Position = UDim2.new(0.5, -90, 0, 5)
-title.BackgroundTransparency = 1
-title.Text = "🔥 AUTO FARM"
-title.TextColor3 = Color3.fromRGB(255, 200, 50)
-title.TextSize = 18
-title.Font = Enum.Font.GothamBold
-title.Parent = frame
-
-local paketLabel = Instance.new("TextLabel")
-paketLabel.Size = UDim2.new(0, 180, 0, 18)
-paketLabel.Position = UDim2.new(0.5, -90, 0, 32)
-paketLabel.BackgroundTransparency = 1
-paketLabel.Text = "PAKET: 1"
-paketLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-paketLabel.TextSize = 13
-paketLabel.Font = Enum.Font.Gotham
-paketLabel.Parent = frame
-
-local btnStart = Instance.new("TextButton")
-btnStart.Size = UDim2.new(0, 120, 0, 30)
-btnStart.Position = UDim2.new(0.5, -60, 0, 55)
-btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
-btnStart.Text = "▶ START"
-btnStart.TextColor3 = Color3.fromRGB(255,255,255)
-btnStart.TextSize = 14
-btnStart.Font = Enum.Font.GothamBold
-btnStart.BorderSizePixel = 0
-btnStart.Parent = frame
-
-local runtimeLabel = Instance.new("TextLabel")
-runtimeLabel.Size = UDim2.new(0, 180, 0, 15)
-runtimeLabel.Position = UDim2.new(0.5, -90, 0, 92)
-runtimeLabel.BackgroundTransparency = 1
-runtimeLabel.Text = "⏱️ 0m"
-runtimeLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
-runtimeLabel.TextSize = 11
-runtimeLabel.Font = Enum.Font.Gotham
-runtimeLabel.Parent = frame
-
--- ===== UI LOGIC =====
-btnStart.MouseButton1Click:Connect(function()
-    if isRunning then
+-- ===== CHAT COMMAND =====
+player.Chatted:Connect(function(msg)
+    local cmd = msg:lower()
+    if cmd == "!start" then
+        task.spawn(startFarm)
+    elseif cmd == "!stop" then
         stopFarm()
-        btnStart.Text = "▶ START"
-        btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
-        return
-    end
-    btnStart.Text = "⏳ PROSES"
-    btnStart.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-    task.spawn(function()
-        local ok, err = pcall(startFarm)
-        if not ok then notif("❌", "Error: " .. tostring(err)) end
-        if not isRunning then
-            btnStart.Text = "▶ START"
-            btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
+    elseif cmd:match("!set (%d+)") then
+        local num = tonumber(cmd:match("!set (%d+)"))
+        if num and num >= 1 and num <= 50 then
+            jumlahPaket = num
+            notif("📦", "Paket: " .. num)
         end
-    end)
-end)
-
--- ===== UPDATE RUNTIME =====
-task.spawn(function()
-    while true do
-        if isRunning then
-            local runtime = os.time() - startTime
-            local m = math.floor(runtime / 60)
-            local s = runtime % 60
-            runtimeLabel.Text = string.format("⏱️ %dm %02ds", m, s)
-        end
-        task.wait(1)
     end
 end)
 
--- ===== TOGGLE UI =====
-game:GetService("UserInputService").InputBegan:Connect(function(input, p)
-    if p then return end
-    if input.KeyCode == Enum.KeyCode.Z then
-        screenGui.Enabled = not screenGui.Enabled
-    end
-end)
-
-notif("✅", "Bypass Super aktif! Tekan Z untuk toggle UI.")
+notif("✅", "Auto Farm siap! !start, !stop, !set 5")
