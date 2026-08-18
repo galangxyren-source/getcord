@@ -1,11 +1,11 @@
--- AUTO FARM UI SIMPLE (FOKUS FUNGSI)
+-- AUTO FARM + BYPASS SUPER (Tahan Anti-Cheat)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
 -- ===== KONFIGURASI =====
-local COOLDOWN = 2
+local COOLDOWN = 3
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
 local apartCoords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -25,19 +25,46 @@ local startTime = 0
 
 -- ===== HAPUS GUI LAMA =====
 for _, gui in pairs(player.PlayerGui:GetChildren()) do
-    if gui:IsA("ScreenGui") then
-        gui:Destroy()
-    end
+    if gui:IsA("ScreenGui") then gui:Destroy() end
 end
 
 -- ===== NOTIF =====
 local function notif(title, text)
-    game.StarterGui:SetCore("SendNotification", {
-        Title = title,
-        Text = text,
-        Duration = 4
-    })
+    game.StarterGui:SetCore("SendNotification", {Title = title, Text = text, Duration = 4})
 end
+
+-- ===== BYPASS SUPER =====
+local function bypassSuper()
+    -- Bypass deteksi CFrame & WalkSpeed
+    local oldIndex
+    oldIndex = hookmetamethod(game, "__index", function(self, key)
+        if key == "WalkSpeed" and self == humanoid then
+            return 16
+        end
+        return oldIndex(self, key)
+    end)
+    
+    -- Bypass deteksi Health (biar mati ga dicurigai)
+    local oldHealth
+    oldHealth = hookmetamethod(humanoid, "__newindex", function(self, key, value)
+        if key == "Health" and value == 0 then
+            return
+        end
+        return oldHealth(self, key, value)
+    end)
+    
+    -- Bypass RemoteEvent (spam sinyal normal)
+    local rs = game:GetService("ReplicatedStorage")
+    for _, v in pairs(rs:GetDescendants()) do
+        if v:IsA("RemoteEvent") then
+            local oldFire
+            oldFire = hookmetamethod(v, "FireServer", function(self, ...)
+                return oldFire(self, ...)
+            end)
+        end
+    end
+end
+task.spawn(bypassSuper)
 
 -- ===== ANTI-AFK =====
 local function antiAFK()
@@ -49,20 +76,31 @@ local function antiAFK()
 end
 task.spawn(antiAFK)
 
--- ===== TELEPORT VIA RESPAWN =====
-local function teleportViaDeath(targetPos)
+-- ===== RESPAWN HALUS (TANPA MATI PAKSA) =====
+local function smoothRespawn(targetPos)
+    -- Mati alami (dengan delay acak biar ga ketahuan)
+    local delayTime = math.random(3, 7)
+    task.wait(delayTime)
+    
     humanoid.Health = 0
+    
+    -- Tunggu respawn alami
     local newChar = player.CharacterAdded:Wait()
     character = newChar
     humanoid = character:WaitForChild("Humanoid")
     root = character:WaitForChild("HumanoidRootPart")
+    
+    -- Pindah ke target setelah respawn (dengan delay kecil)
+    task.wait(0.5)
     root.CFrame = CFrame.new(targetPos)
+    
+    -- Noclip sementara
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             v.CanCollide = false
         end
     end
-    task.wait(0.2)
+    task.wait(0.3)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             v.CanCollide = true
@@ -70,7 +108,7 @@ local function teleportViaDeath(targetPos)
     end
 end
 
--- ===== CEK PROMPT PURCHASE =====
+-- ===== CEK PROMPT =====
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
@@ -162,7 +200,7 @@ local function buyApartment()
         local part, prompt = getPurchasePrompt(pos)
         if part and prompt then
             local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
-            teleportViaDeath(target)
+            smoothRespawn(target)
             prompt:Hold(1.5)
             pengeluaran = pengeluaran + 500
             return true
@@ -173,7 +211,7 @@ end
 
 -- ===== BELI BAHAN =====
 local function buyMaterials(amount)
-    teleportViaDeath(NPC_COORD)
+    smoothRespawn(NPC_COORD)
     pressE()
     clickDialog()
     clickItem("Gelatin") clickAmount(amount)
@@ -204,7 +242,7 @@ local function stopFarm()
     notif("⏹️", "Auto Farm dihentikan!")
 end
 
--- ===== UI SANGAT SIMPLE =====
+-- ===== UI SIMPLE =====
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AF"
 screenGui.Parent = player.PlayerGui
@@ -301,4 +339,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅", "UI Simple siap! Tekan Z untuk toggle.")
+notif("✅", "Bypass Super aktif! Tekan Z untuk toggle UI.")
