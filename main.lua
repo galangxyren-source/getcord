@@ -5,7 +5,7 @@ local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
-local ALT_OFFSET = -1
+local ALT_OFFSET = -0.2
 local DURASI_TURUN = 5
 local DURASI_JALAN = 12
 local DURASI_NAIK = 5
