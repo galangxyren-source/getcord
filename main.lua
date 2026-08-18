@@ -1,13 +1,11 @@
--- AUTO BUY APART V8 - PAKAI TWEEN (LAMBAT & HALUS)
+-- AUTO BUY APART V9 - JALAN NORMAL MURNI (MoveTo)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
-local TweenService = game:GetService("TweenService")
 
-local SPEED = 1
+local SPEED = 11  -- kecepatan normal Roblox
 local ALT_OFFSET = -8
-local DURASI = 4  -- lama gerak per segmen (dalam detik)
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -20,22 +18,45 @@ local coords = {
 
 local isRunning = false
 
--- ===== GERAK LAMBAT PAKAI TWEEN =====
-local function tweenTo(pos, durasi)
-    local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
-    tween:Play()
-    tween.Completed:Wait()
+-- ===== JALAN NORMAL KE POSISI (MoveTo) =====
+local function walkTo(pos)
+    humanoid.WalkSpeed = SPEED
+    humanoid:MoveTo(pos)
+    
+    -- Tunggu sampai jarak < 5 stud
+    while (root.Position - pos).Magnitude > 5 do
+        task.wait(0.1)
+    end
 end
 
--- ===== TURUN KE BAWAH =====
+-- ===== TURUN KE BAWAH PERMUKAAN (HALUS) =====
 local function goBelow(targetPos)
     local below = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
-    tweenTo(below, DURASI * 0.3)
+    -- Pindah perlahan ke bawah (tanpa teleport)
+    for i = 1, 30 do
+        local t = i / 30
+        local lerp = Vector3.new(
+            root.Position.X + (below.X - root.Position.X) * 0.05,
+            root.Position.Y + (below.Y - root.Position.Y) * 0.05,
+            root.Position.Z + (below.Z - root.Position.Z) * 0.05
+        )
+        root.CFrame = CFrame.new(lerp)
+        task.wait(0.02)
+    end
 end
 
--- ===== NAIK KE PERMUKAAN =====
+-- ===== NAIK KE PERMUKAAN (HALUS) =====
 local function goAbove(targetPos)
-    tweenTo(targetPos, DURASI * 0.3)
+    for i = 1, 30 do
+        local t = i / 30
+        local lerp = Vector3.new(
+            root.Position.X + (targetPos.X - root.Position.X) * 0.05,
+            root.Position.Y + (targetPos.Y - root.Position.Y) * 0.05,
+            root.Position.Z + (targetPos.Z - root.Position.Z) * 0.05
+        )
+        root.CFrame = CFrame.new(lerp)
+        task.wait(0.02)
+    end
 end
 
 -- ===== CEK PROMPT =====
@@ -64,27 +85,27 @@ local function buy()
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
 
-            -- 1. Jalan ke atas target
-            local above = Vector3.new(targetPos.X, targetPos.Y + 5, targetPos.Z)
-            tweenTo(above, DURASI * 0.3)
-            task.wait(0.1)
+            -- 1. Jalan ke atas target (biar turun perlahan)
+            local above = Vector3.new(targetPos.X, targetPos.Y + 10, targetPos.Z)
+            walkTo(above)
+            task.wait(0.3)
 
-            -- 2. Turun ke bawah permukaan
+            -- 2. Turun ke bawah permukaan (halus)
             goBelow(targetPos)
-            task.wait(0.1)
-
-            -- 3. Jalan horizontal di bawah tanah
-            local bawah = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
-            tweenTo(bawah, DURASI * 0.5)
-            task.wait(0.1)
-
-            -- 4. Naik ke permukaan
-            goAbove(targetPos)
-            task.wait(0.1)
-
-            -- 5. Posisi akhir di depan apartemen
-            tweenTo(targetPos, DURASI * 0.3)
             task.wait(0.2)
+
+            -- 3. Jalan normal di bawah tanah menuju target
+            local bawah = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
+            walkTo(bawah)
+            task.wait(0.3)
+
+            -- 4. Naik ke permukaan (halus)
+            goAbove(targetPos)
+            task.wait(0.2)
+
+            -- 5. Jalan normal ke posisi akhir
+            walkTo(targetPos)
+            task.wait(0.3)
 
             -- 6. Hold E
             prompt:Hold(1.5)
