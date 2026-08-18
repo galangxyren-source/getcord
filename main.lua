@@ -1,11 +1,14 @@
--- AUTO BUY APART V18 - MOVETO PELAN + DELAY (ANTI CRASH)
+-- AUTO BUY APART V16 - FILTER PURCHASE (TEPAT)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
+local TweenService = game:GetService("TweenService")
 
-local SPEED = 8
 local ALT_OFFSET = -8
+local DURASI_TURUN = 2
+local DURASI_JALAN = 8
+local DURASI_NAIK = 2
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -25,52 +28,64 @@ local function noclip(state)
             v.CanCollide = not state
         end
     end
-end
-
--- ===== JALAN PELAN PAKAI MOVETO =====
-local function walkTo(pos)
-    humanoid.WalkSpeed = SPEED
-    humanoid:MoveTo(pos)
-    -- Tunggu sampai jarak < 3
-    while (root.Position - pos).Magnitude > 3 do
-        task.wait(0.1)
+    if state then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    else
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
     end
 end
 
--- ===== TURUN PELAN (CFRAME BERTAHAP) =====
-local function goDown(targetPos)
+-- ===== DORONG PAKAI VELOCITY (BIAR TEMBUS) =====
+local function pushDown(targetPos)
     local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
-    for i = 1, 20 do
-        local t = i / 20
-        root.CFrame = CFrame.new(root.Position:Lerp(below, 0.05))
-        task.wait(0.05)
-    end
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(0, 1e6, 0)
+    bodyVelocity.Velocity = Vector3.new(0, -30, 0)
+    bodyVelocity.Parent = root
+    
+    task.wait(0.5)
+    root.CFrame = CFrame.new(below)
+    bodyVelocity:Destroy()
 end
 
--- ===== NAIK PELAN (CFRAME BERTAHAP) =====
-local function goUp(targetPos)
-    for i = 1, 20 do
-        local t = i / 20
-        root.CFrame = CFrame.new(root.Position:Lerp(targetPos, 0.05))
-        task.wait(0.05)
-    end
+-- ===== GERAK PAKAI TWEEN =====
+local function tweenTo(pos, durasi)
+    local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
+    tween:Play()
+    tween.Completed:Wait()
 end
 
--- ===== CEK PROMPT (PURCHASE SAJA) =====
+-- ===== CEK PROMPT (HANYA PURCHASE, BUKAN OPEN) =====
 local function getPurchasePrompt(pos)
+    local candidates = {}
+    
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") then
             local parent = p.Parent
             if parent and parent:IsA("BasePart") then
-                if (parent.Position - pos).Magnitude < 20 then
+                local dist = (parent.Position - pos).Magnitude
+                if dist < 25 then
                     local txt = p.ActionText or ""
-                    if (txt:lower():find("purchase") or txt:lower():find("beli")) and p.Enabled == true then
-                        return parent, p
+                    -- Filter KETAT: hanya "purchase" / "beli", IGNORE "open"
+                    local isPurchase = txt:lower():find("purchase") or txt:lower():find("beli")
+                    local isOpen = txt:lower():find("open")
+                    
+                    if isPurchase and not isOpen and p.Enabled == true then
+                        table.insert(candidates, {part = parent, prompt = p, dist = dist})
                     end
                 end
             end
         end
     end
+    
+    -- Pilih yang terdekat
+    if #candidates > 0 then
+        table.sort(candidates, function(a, b) return a.dist < b.dist end)
+        return candidates[1].part, candidates[1].prompt
+    end
+    
     return nil, nil
 end
 
@@ -84,24 +99,21 @@ local function buy()
 
             noclip(true)
             
-            -- 1. Turun pelan
-            goDown(targetPos)
-            task.wait(0.3)
+            pushDown(targetPos)
+            task.wait(0.2)
 
-            -- 2. Jalan di bawah tanah
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
-            walkTo(bawahTarget)
-            task.wait(0.3)
+            tweenTo(bawahTarget, DURASI_JALAN)
+            task.wait(0.2)
 
-            -- 3. Naik pelan
-            goUp(targetPos)
-            task.wait(0.3)
+            tweenTo(targetPos, DURASI_NAIK)
+            task.wait(0.2)
 
             noclip(false)
 
-            -- 4. Hold E
+            -- HOLD E (PASTI PURCHASE)
             prompt:Hold(1.5)
-            task.wait(0.5)
+            task.wait(0.3)
         end
     end
     isRunning = false
