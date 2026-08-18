@@ -1,14 +1,14 @@
--- AUTO BUY APART V16 - FIX JATUH/TERBANG
+ -- AUTO BUY APART V16 - TURUN SEDIKIT (GAK KE VOID)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
-local ALT_OFFSET = -1.5
-local DURASI_TURUN = 5
-local DURASI_JALAN = 30
-local DURASI_NAIK = 5
+local ALT_OFFSET = -1.5        -- <-- TURUN SEDIKIT (GAK KE VOID)
+local DURASI_TURUN = 2
+local DURASI_JALAN = 5
+local DURASI_NAIK = 2
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -21,7 +21,7 @@ local coords = {
 
 local isRunning = false
 
--- ===== NOCLIP + PLATFORMSTAND =====
+-- ===== NOCLIP =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -31,45 +31,23 @@ local function noclip(state)
     if state then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid.PlatformStand = true   -- <-- CEK POSISI BIAR GA JATUH
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-        humanoid.PlatformStand = false
     end
 end
 
--- ===== TURUN PAKAI CFRAME BERTAHAP =====
-local function goDown(targetPos)
+-- ===== DORONG PAKAI VELOCITY (BIAR TEMBUS) =====
+local function pushDown(targetPos)
     local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(0, 1e6, 0)
+    bodyVelocity.Velocity = Vector3.new(0, -30, 0)
+    bodyVelocity.Parent = root
     
-    for i = 1, 20 do
-        local t = i / 20
-        local newPos = Vector3.new(
-            root.Position.X,
-            root.Position.Y + (below.Y - root.Position.Y) * t,
-            root.Position.Z
-        )
-        root.CFrame = CFrame.new(newPos)
-        task.wait(0.03)
-    end
-end
-
--- ===== NAIK PAKAI CFRAME BERTAHAP =====
-local function goUp(targetPos)
-    local startY = root.Position.Y
-    local targetY = targetPos.Y + 2
-    
-    for i = 1, 20 do
-        local t = i / 20
-        local newPos = Vector3.new(
-            root.Position.X,
-            startY + (targetY - startY) * t,
-            root.Position.Z
-        )
-        root.CFrame = CFrame.new(newPos)
-        task.wait(0.03)
-    end
+    task.wait(0.5)
+    root.CFrame = CFrame.new(below)
+    bodyVelocity:Destroy()
 end
 
 -- ===== GERAK PAKAI TWEEN =====
@@ -119,17 +97,14 @@ local function buy()
 
             noclip(true)
             
-            -- 1. TURUN PELAN
-            goDown(targetPos)
+            pushDown(targetPos)
             task.wait(0.2)
 
-            -- 2. JALAN DI BAWAH TANAH
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
             tweenTo(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
-            -- 3. NAIK PELAN
-            goUp(targetPos)
+            tweenTo(targetPos, DURASI_NAIK)
             task.wait(0.2)
 
             noclip(false)
