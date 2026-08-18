@@ -1,4 +1,4 @@
--- JALAN CEPAT + NOCLIP + INTERACT (TANPA UI)
+-- JALAN 15 DETIK BERTAHAP + NOCLIP + INTERACT
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -43,12 +43,25 @@ task.wait(2)
 noclip(true)
 notif("🌀", "Noclip aktif!")
 
--- ===== JALAN CEPAT PAKAI TWEEN =====
-notif("🚀", "Terbang ke NPC...")
+-- ===== JALAN BERTAHAP 15 DETIK =====
+notif("🚀", "Menuju NPC (15 detik)...")
 
-local tween = TweenService:Create(root, TweenInfo.new(2, Enum.EasingStyle.Linear), {CFrame = CFrame.new(NPC_COORD)})
-tween:Play()
-tween.Completed:Wait()
+local startPos = root.Position
+local targetPos = NPC_COORD
+local steps = 30
+local durasi = 0.5  -- detik per step (30 × 0.5 = 15 detik)
+
+for i = 1, steps do
+    local t = i / steps
+    local pos = Vector3.new(
+        startPos.X + (targetPos.X - startPos.X) * t,
+        startPos.Y + (targetPos.Y - startPos.Y) * t,
+        startPos.Z + (targetPos.Z - startPos.Z) * t
+    )
+    local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
+    tween:Play()
+    tween.Completed:Wait()
+end
 
 notif("✅", "Sampai di NPC!")
 
