@@ -1,4 +1,4 @@
--- AUTO FARM FULL - BELI APART + BAHAN + JALAN 60 DETIK
+-- AUTO FARM FULL - UI SIMPEL (GAK GANGGU HUD)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -7,7 +7,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local BAWAH_Y = -1  -- turun 1 stud
+local BAWAH_Y = -1
 
 local apartCoords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -79,7 +79,7 @@ local function goUp(targetPos)
     end
 end
 
--- ===== JALAN PAKAI MOVETO (60 DETIK) =====
+-- ===== JALAN PAKAI MOVETO =====
 local function walkSlow(pos)
     humanoid.WalkSpeed = 10
     humanoid:MoveTo(pos)
@@ -183,7 +183,6 @@ end
 local function buyApartment()
     noclip(true)
     goDown()
-    
     for _, pos in ipairs(apartCoords) do
         local part, prompt = getPurchasePrompt(pos)
         if part and prompt then
@@ -196,7 +195,6 @@ local function buyApartment()
             return true
         end
     end
-    
     noclip(false)
     return false
 end
@@ -208,14 +206,12 @@ local function buyMaterials(amount)
     walkSlow(Vector3.new(NPC_COORD.X, BAWAH_Y, NPC_COORD.Z))
     goUp(NPC_COORD)
     noclip(false)
-    
     pressE()
     clickDialog()
     clickBuyItem("Gelatin") clickAmount(amount)
     clickBuyItem("Sugar Block Bag") clickAmount(amount)
     clickBuyItem("Water") clickAmount(amount)
     clickExit()
-    
     pengeluaran = pengeluaran + amount * 190
     pendapatan = pendapatan + amount * 500
 end
@@ -224,7 +220,6 @@ end
 local function startFarm()
     isRunning = true
     notif("🔥", "Auto Farm dimulai!")
-    
     while isRunning do
         siklus = siklus + 1
         buyApartment()
@@ -234,133 +229,117 @@ local function startFarm()
     end
 end
 
--- ===== UI MODERN =====
+-- ===== UI SIMPEL =====
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoFarm"
 screenGui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 320, 0, 240)
-frame.Position = UDim2.new(0.5, -160, 0.5, -120)
-frame.BackgroundColor3 = Color3.fromRGB(10, 10, 30)
-frame.BackgroundTransparency = 0.1
+frame.Size = UDim2.new(0, 280, 0, 180)
+frame.Position = UDim2.new(0.5, -140, 0.5, -90)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = screenGui
-Instance.new("UICorner").CornerRadius = UDim.new(0, 16); frame.Parent = frame
+Instance.new("UICorner").CornerRadius = UDim.new(0, 12); frame.Parent = frame
 
--- ===== JUDUL =====
+-- Judul
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 300, 0, 35)
-title.Position = UDim2.new(0.5, -150, 0, 5)
+title.Size = UDim2.new(0, 260, 0, 30)
+title.Position = UDim2.new(0.5, -130, 0, 5)
 title.BackgroundTransparency = 1
 title.Text = "🔥 AUTO FARM"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
-title.TextSize = 24
+title.TextSize = 22
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
--- ===== SLIDER =====
-local sliderLabel = Instance.new("TextLabel")
-sliderLabel.Size = UDim2.new(0, 200, 0, 20)
-sliderLabel.Position = UDim2.new(0.5, -100, 0, 48)
-sliderLabel.BackgroundTransparency = 1
-sliderLabel.Text = "📦 PAKET (1-50)"
-sliderLabel.TextColor3 = Color3.fromRGB(200, 200, 230)
-sliderLabel.TextSize = 14
-sliderLabel.Font = Enum.Font.GothamBold
-sliderLabel.Parent = frame
+-- Paket
+local paketLabel = Instance.new("TextLabel")
+paketLabel.Size = UDim2.new(0, 200, 0, 20)
+paketLabel.Position = UDim2.new(0.5, -100, 0, 40)
+paketLabel.BackgroundTransparency = 1
+paketLabel.Text = "📦 PAKET: 1"
+paketLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+paketLabel.TextSize = 14
+paketLabel.Font = Enum.Font.GothamBold
+paketLabel.Parent = frame
 
+-- Tombol -
 local minus = Instance.new("TextButton")
-minus.Size = UDim2.new(0, 40, 0, 36)
-minus.Position = UDim2.new(0.5, -65, 0, 72)
-minus.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
+minus.Size = UDim2.new(0, 35, 0, 30)
+minus.Position = UDim2.new(0.5, -55, 0, 65)
+minus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 minus.Text = "−"
 minus.TextColor3 = Color3.fromRGB(255,255,255)
-minus.TextSize = 24
+minus.TextSize = 20
 minus.Font = Enum.Font.GothamBold
 minus.BorderSizePixel = 0
 minus.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 8); minus.Parent = frame
+Instance.new("UICorner").CornerRadius = UDim.new(0, 6); minus.Parent = frame
 
+-- Angka
 local angka = Instance.new("TextLabel")
-angka.Size = UDim2.new(0, 60, 0, 36)
-angka.Position = UDim2.new(0.5, -30, 0, 72)
-angka.BackgroundColor3 = Color3.fromRGB(20, 20, 45)
+angka.Size = UDim2.new(0, 40, 0, 30)
+angka.Position = UDim2.new(0.5, -20, 0, 65)
+angka.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
 angka.Text = "1"
 angka.TextColor3 = Color3.fromRGB(255,255,255)
-angka.TextSize = 22
+angka.TextSize = 18
 angka.Font = Enum.Font.GothamBold
 angka.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 8); angka.Parent = frame
+Instance.new("UICorner").CornerRadius = UDim.new(0, 6); angka.Parent = frame
 
+-- Tombol +
 local plus = Instance.new("TextButton")
-plus.Size = UDim2.new(0, 40, 0, 36)
-plus.Position = UDim2.new(0.5, 25, 0, 72)
-plus.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
+plus.Size = UDim2.new(0, 35, 0, 30)
+plus.Position = UDim2.new(0.5, 20, 0, 65)
+plus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 plus.Text = "+"
 plus.TextColor3 = Color3.fromRGB(255,255,255)
-plus.TextSize = 24
+plus.TextSize = 20
 plus.Font = Enum.Font.GothamBold
 plus.BorderSizePixel = 0
 plus.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 8); plus.Parent = frame
+Instance.new("UICorner").CornerRadius = UDim.new(0, 6); plus.Parent = frame
 
--- ===== TOMBOL START =====
+-- Tombol START
 local startBtn = Instance.new("TextButton")
-startBtn.Size = UDim2.new(0, 220, 0, 42)
-startBtn.Position = UDim2.new(0.5, -110, 0, 125)
+startBtn.Size = UDim2.new(0, 200, 0, 35)
+startBtn.Position = UDim2.new(0.5, -100, 0, 110)
 startBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
 startBtn.Text = "▶ START"
 startBtn.TextColor3 = Color3.fromRGB(255,255,255)
-startBtn.TextSize = 18
+startBtn.TextSize = 16
 startBtn.Font = Enum.Font.GothamBold
 startBtn.BorderSizePixel = 0
 startBtn.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 10); startBtn.Parent = frame
+Instance.new("UICorner").CornerRadius = UDim.new(0, 8); startBtn.Parent = frame
 
--- ===== RUNTIME =====
+-- Runtime
 local runtimeLabel = Instance.new("TextLabel")
-runtimeLabel.Size = UDim2.new(0, 300, 0, 20)
-runtimeLabel.Position = UDim2.new(0.5, -150, 0, 178)
+runtimeLabel.Size = UDim2.new(0, 260, 0, 18)
+runtimeLabel.Position = UDim2.new(0.5, -130, 0, 155)
 runtimeLabel.BackgroundTransparency = 1
 runtimeLabel.Text = "⏱️ 0 m 00 s"
 runtimeLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
-runtimeLabel.TextSize = 14
+runtimeLabel.TextSize = 12
 runtimeLabel.Font = Enum.Font.Gotham
 runtimeLabel.Parent = frame
-
-local pengeluaranLabel = Instance.new("TextLabel")
-pengeluaranLabel.Size = UDim2.new(0, 140, 0, 20)
-pengeluaranLabel.Position = UDim2.new(0.08, 0, 0, 205)
-pengeluaranLabel.BackgroundTransparency = 1
-pengeluaranLabel.Text = "💸 $0"
-pengeluaranLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
-pengeluaranLabel.TextSize = 14
-pengeluaranLabel.Font = Enum.Font.Gotham
-pengeluaranLabel.Parent = frame
-
-local pendapatanLabel = Instance.new("TextLabel")
-pendapatanLabel.Size = UDim2.new(0, 140, 0, 20)
-pendapatanLabel.Position = UDim2.new(0.55, 0, 0, 205)
-pendapatanLabel.BackgroundTransparency = 1
-pendapatanLabel.Text = "💰 $0"
-pendapatanLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
-pendapatanLabel.TextSize = 14
-pendapatanLabel.Font = Enum.Font.Gotham
-pendapatanLabel.Parent = frame
 
 -- ===== UI LOGIC =====
 minus.MouseButton1Click:Connect(function()
     if isRunning then return end
     local v = tonumber(angka.Text) or 1
-    if v > 1 then v = v - 1; angka.Text = tostring(v); jumlahPaket = v end
+    if v > 1 then v = v - 1; angka.Text = tostring(v); paketLabel.Text = "📦 PAKET: " .. v; jumlahPaket = v end
 end)
 
 plus.MouseButton1Click:Connect(function()
     if isRunning then return end
     local v = tonumber(angka.Text) or 1
-    if v < 50 then v = v + 1; angka.Text = tostring(v); jumlahPaket = v end
+    if v < 50 then v = v + 1; angka.Text = tostring(v); paketLabel.Text = "📦 PAKET: " .. v; jumlahPaket = v end
 end)
 
 startBtn.MouseButton1Click:Connect(function()
@@ -371,7 +350,6 @@ startBtn.MouseButton1Click:Connect(function()
         notif("⏹️", "Auto Farm dihentikan!")
         return
     end
-    
     startBtn.Text = "⏳ PROSES..."
     startBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     task.spawn(function()
@@ -394,9 +372,7 @@ task.spawn(function()
             local s = runtime % 60
             runtimeLabel.Text = string.format("⏱️ %d m %02d s", m, s)
         end
-        pengeluaranLabel.Text = "💸 $" .. pengeluaran
-        pendapatanLabel.Text = "💰 $" .. pendapatan
-        task.wait(0.5)
+        task.wait(1)
     end
 end)
 
@@ -408,4 +384,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅", "Auto Farm FULL siap! Tekan Z untuk toggle UI.")
+notif("✅", "Auto Farm siap! Tekan Z untuk toggle UI.")
