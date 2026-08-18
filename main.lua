@@ -1,10 +1,10 @@
--- AUTO BUY APART V6 - JALAN HALUS + SPEED 12
+-- AUTO BUY APART V7 - JALAN NORMAL ROBLOX (MoveTo)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
-local SPEED = 12  -- kecepatan normal
+local SPEED = 11  -- kecepatan normal Roblox
 local ALT_OFFSET = -8
 
 local coords = {
@@ -18,53 +18,49 @@ local coords = {
 
 local isRunning = false
 
--- ===== GERAK HALUS KE BAWAH PERMUKAAN =====
-local function goTo(pos)
-    local start = root.Position
-    local bawah = Vector3.new(pos.X, pos.Y - 2, pos.Z)
-    local targetBawah = Vector3.new(pos.X, pos.Y + ALT_OFFSET, pos.Z)
-    local akhir = Vector3.new(pos.X, pos.Y + 2, pos.Z)
-
-    -- Turun perlahan ke bawah permukaan
+-- ===== JALAN NORMAL KE KOORDINAT (MoveTo) =====
+local function walkTo(pos)
     humanoid.WalkSpeed = SPEED
-    for i = 1, 15 do
-        local t = i / 15
+    humanoid:MoveTo(pos)
+    
+    -- Tunggu sampai sampai (dengan timeout)
+    local timeout = os.clock() + 30
+    while (root.Position - pos).Magnitude > 3 and os.clock() < timeout do
+        task.wait(0.1)
+    end
+end
+
+-- ===== TURUN KE BAWAH PERMUKAAN (HALUS) =====
+local function goBelowSurface(targetPos)
+    local below = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
+    
+    -- Turun perlahan pakai CFrame bertahap (agar tidak "swing")
+    local start = root.Position
+    for i = 1, 20 do
+        local t = i / 20
         local lerp = Vector3.new(
-            start.X + (bawah.X - start.X) * t,
-            start.Y + (bawah.Y - start.Y) * t,
-            start.Z + (bawah.Z - start.Z) * t
+            start.X + (below.X - start.X) * t,
+            start.Y + (below.Y - start.Y) * t,
+            start.Z + (below.Z - start.Z) * t
         )
         root.CFrame = CFrame.new(lerp)
-        task.wait(0.05)
+        task.wait(0.03)
     end
+end
 
-    -- Jalan cepat di bawah tanah menuju target
-    for i = 1, 25 do
-        local t = i / 25
+-- ===== NAIK KE PERMUKAAN (HALUS) =====
+local function goAboveSurface(targetPos)
+    local start = root.Position
+    for i = 1, 20 do
+        local t = i / 20
         local lerp = Vector3.new(
-            bawah.X + (targetBawah.X - bawah.X) * t,
-            bawah.Y + (targetBawah.Y - bawah.Y) * t,
-            bawah.Z + (targetBawah.Z - bawah.Z) * t
+            start.X + (targetPos.X - start.X) * t,
+            start.Y + (targetPos.Y - start.Y) * t,
+            start.Z + (targetPos.Z - start.Z) * t
         )
         root.CFrame = CFrame.new(lerp)
-        task.wait(0.04)
+        task.wait(0.03)
     end
-
-    -- Naik perlahan ke permukaan
-    for i = 1, 15 do
-        local t = i / 15
-        local lerp = Vector3.new(
-            targetBawah.X + (akhir.X - targetBawah.X) * t,
-            targetBawah.Y + (akhir.Y - targetBawah.Y) * t,
-            targetBawah.Z + (akhir.Z - targetBawah.Z) * t
-        )
-        root.CFrame = CFrame.new(lerp)
-        task.wait(0.05)
-    end
-
-    -- Posisi akhir di depan part
-    root.CFrame = CFrame.new(pos)
-    humanoid.WalkSpeed = 16
 end
 
 -- ===== CEK PROMPT =====
@@ -92,12 +88,32 @@ local function buy()
 
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
-            goTo(targetPos)
+
+            -- 1. Jalan normal ke bawah permukaan (di atas koordinat)
+            local abovePos = Vector3.new(targetPos.X, targetPos.Y + 5, targetPos.Z)
+            walkTo(abovePos)
             task.wait(0.3)
+
+            -- 2. Turun perlahan ke bawah permukaan
+            goBelowSurface(targetPos)
+            task.wait(0.2)
+
+            -- 3. Jalan normal di bawah tanah menuju target (horizontal)
+            walkTo(Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z))
+            task.wait(0.3)
+
+            -- 4. Naik perlahan ke permukaan
+            goAboveSurface(targetPos)
+            task.wait(0.2)
+
+            -- 5. Jalan normal ke posisi akhir
+            walkTo(targetPos)
+            task.wait(0.3)
+
+            -- 6. Hold E
             prompt:Hold(1.5)
             task.wait(0.3)
         end
-        -- kalau tidak ada prompt, lewati
     end
     isRunning = false
 end
