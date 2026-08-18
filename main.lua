@@ -1,14 +1,11 @@
--- AUTO BUY APART V17 - FILTER PROMPT + JALAN LAMBAT
+-- AUTO BUY APART V18 - MOVETO PELAN + DELAY (ANTI CRASH)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
-local TweenService = game:GetService("TweenService")
 
+local SPEED = 8
 local ALT_OFFSET = -8
-local DURASI_TURUN = 4
-local DURASI_JALAN = 10
-local DURASI_NAIK = 4
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -30,14 +27,36 @@ local function noclip(state)
     end
 end
 
--- ===== TWEEN GERAK =====
-local function tweenTo(pos, durasi)
-    local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
-    tween:Play()
-    tween.Completed:Wait()
+-- ===== JALAN PELAN PAKAI MOVETO =====
+local function walkTo(pos)
+    humanoid.WalkSpeed = SPEED
+    humanoid:MoveTo(pos)
+    -- Tunggu sampai jarak < 3
+    while (root.Position - pos).Magnitude > 3 do
+        task.wait(0.1)
+    end
 end
 
--- ===== CEK PROMPT (HANYA PURCHASE, BUKAN OPEN) =====
+-- ===== TURUN PELAN (CFRAME BERTAHAP) =====
+local function goDown(targetPos)
+    local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
+    for i = 1, 20 do
+        local t = i / 20
+        root.CFrame = CFrame.new(root.Position:Lerp(below, 0.05))
+        task.wait(0.05)
+    end
+end
+
+-- ===== NAIK PELAN (CFRAME BERTAHAP) =====
+local function goUp(targetPos)
+    for i = 1, 20 do
+        local t = i / 20
+        root.CFrame = CFrame.new(root.Position:Lerp(targetPos, 0.05))
+        task.wait(0.05)
+    end
+end
+
+-- ===== CEK PROMPT (PURCHASE SAJA) =====
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") then
@@ -45,7 +64,6 @@ local function getPurchasePrompt(pos)
             if parent and parent:IsA("BasePart") then
                 if (parent.Position - pos).Magnitude < 20 then
                     local txt = p.ActionText or ""
-                    -- HANYA yang mengandung "purchase" atau "beli" (BUKAN "open")
                     if (txt:lower():find("purchase") or txt:lower():find("beli")) and p.Enabled == true then
                         return parent, p
                     end
@@ -64,27 +82,24 @@ local function buy()
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
 
-            -- ===== AKTIFKAN NOCLIP =====
             noclip(true)
+            
+            -- 1. Turun pelan
+            goDown(targetPos)
+            task.wait(0.3)
 
-            -- 1. Turun ke bawah permukaan
-            local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
-            tweenTo(below, DURASI_TURUN)
-            task.wait(0.2)
-
-            -- 2. Jalan horizontal di bawah tanah
+            -- 2. Jalan di bawah tanah
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
-            tweenTo(bawahTarget, DURASI_JALAN)
-            task.wait(0.2)
+            walkTo(bawahTarget)
+            task.wait(0.3)
 
-            -- 3. Naik ke permukaan
-            tweenTo(targetPos, DURASI_NAIK)
-            task.wait(0.2)
+            -- 3. Naik pelan
+            goUp(targetPos)
+            task.wait(0.3)
 
-            -- ===== MATIKAN NOCLIP =====
             noclip(false)
 
-            -- 4. Hold E (HANYA purchase prompt)
+            -- 4. Hold E
             prompt:Hold(1.5)
             task.wait(0.5)
         end
