@@ -4,7 +4,7 @@ local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
-local SPEED = 6  -- kecepatan normal Roblox
+local SPEED = 1 -- kecepatan normal Roblox
 local ALT_OFFSET = -8
 
 local coords = {
