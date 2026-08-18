@@ -1,4 +1,4 @@
--- AUTO BUY APART V11 - PAKAI TWEEN (SANGAT LAMBAT)
+-- AUTO BUY APART V12 - TURUN DULU + LAMBAT BANGET
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -8,9 +8,9 @@ local TweenService = game:GetService("TweenService")
 local ALT_OFFSET = -8
 
 -- ===== DURASI GERAK (semakin besar, semakin lambat) =====
-local DURASI_JALAN = 12      -- jalan horizontal (detik)
-local DURASI_TURUN = 5       -- turun ke bawah (detik)
-local DURASI_NAIK = 5        -- naik ke permukaan (detik)
+local DURASI_TURUN = 6        -- turun ke bawah permukaan
+local DURASI_JALAN = 14       -- jalan horizontal di bawah tanah
+local DURASI_NAIK = 6         -- naik ke permukaan
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -56,30 +56,21 @@ local function buy()
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
 
-            -- 1. Jalan ke atas target (biar turun perlahan)
-            local above = Vector3.new(targetPos.X, targetPos.Y + 10, targetPos.Z)
-            tweenTo(above, DURASI_JALAN * 0.3)
-            task.wait(0.2)
-
-            -- 2. Turun ke bawah permukaan
-            local below = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
+            -- 1. TURUN DULU ke bawah permukaan (tanpa naik dulu)
+            local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
             tweenTo(below, DURASI_TURUN)
             task.wait(0.2)
 
-            -- 3. Jalan horizontal di bawah tanah
+            -- 2. Jalan horizontal di bawah tanah menuju target
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
             tweenTo(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
-            -- 4. Naik ke permukaan
+            -- 3. NAIK ke permukaan
             tweenTo(targetPos, DURASI_NAIK)
             task.wait(0.2)
 
-            -- 5. Posisi akhir di depan apartemen
-            tweenTo(targetPos, DURASI_JALAN * 0.2)
-            task.wait(0.2)
-
-            -- 6. Hold E
+            -- 4. Hold E
             prompt:Hold(1.5)
             task.wait(0.3)
         end
