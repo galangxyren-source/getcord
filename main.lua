@@ -6,9 +6,9 @@ local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
 local ALT_OFFSET = -1.5
-local DURASI_TURUN = 2
-local DURASI_JALAN = 5
-local DURASI_NAIK = 2
+local DURASI_TURUN = 5
+local DURASI_JALAN = 30
+local DURASI_NAIK = 5
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
