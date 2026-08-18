@@ -1,10 +1,10 @@
--- AUTO BUY APART V5 - AUTO HOLD E LANGSUNG
+-- AUTO BUY APART V6 - JALAN HALUS + SPEED 12
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
-local SPEED = 120
+local SPEED = 12  -- kecepatan normal
 local ALT_OFFSET = -8
 
 local coords = {
@@ -18,27 +18,51 @@ local coords = {
 
 local isRunning = false
 
--- ===== GERAK CEPAT =====
+-- ===== GERAK HALUS KE BAWAH PERMUKAAN =====
 local function goTo(pos)
     local start = root.Position
-    local bawah = Vector3.new(pos.X, pos.Y - 1, pos.Z)
+    local bawah = Vector3.new(pos.X, pos.Y - 2, pos.Z)
     local targetBawah = Vector3.new(pos.X, pos.Y + ALT_OFFSET, pos.Z)
+    local akhir = Vector3.new(pos.X, pos.Y + 2, pos.Z)
 
-    root.CFrame = CFrame.new(bawah)
-    task.wait(0.03)
-
+    -- Turun perlahan ke bawah permukaan
     humanoid.WalkSpeed = SPEED
-    for i = 1, 20 do
-        root.CFrame = CFrame.new(start:Lerp(targetBawah, i/20))
-        task.wait(0.015)
+    for i = 1, 15 do
+        local t = i / 15
+        local lerp = Vector3.new(
+            start.X + (bawah.X - start.X) * t,
+            start.Y + (bawah.Y - start.Y) * t,
+            start.Z + (bawah.Z - start.Z) * t
+        )
+        root.CFrame = CFrame.new(lerp)
+        task.wait(0.05)
     end
 
-    for i = 1, 8 do
-        local naik = Vector3.new(pos.X, targetBawah.Y + (pos.Y - targetBawah.Y) * (i/8), pos.Z)
-        root.CFrame = CFrame.new(naik)
-        task.wait(0.015)
+    -- Jalan cepat di bawah tanah menuju target
+    for i = 1, 25 do
+        local t = i / 25
+        local lerp = Vector3.new(
+            bawah.X + (targetBawah.X - bawah.X) * t,
+            bawah.Y + (targetBawah.Y - bawah.Y) * t,
+            bawah.Z + (targetBawah.Z - bawah.Z) * t
+        )
+        root.CFrame = CFrame.new(lerp)
+        task.wait(0.04)
     end
 
+    -- Naik perlahan ke permukaan
+    for i = 1, 15 do
+        local t = i / 15
+        local lerp = Vector3.new(
+            targetBawah.X + (akhir.X - targetBawah.X) * t,
+            targetBawah.Y + (akhir.Y - targetBawah.Y) * t,
+            targetBawah.Z + (akhir.Z - targetBawah.Z) * t
+        )
+        root.CFrame = CFrame.new(lerp)
+        task.wait(0.05)
+    end
+
+    -- Posisi akhir di depan part
     root.CFrame = CFrame.new(pos)
     humanoid.WalkSpeed = 16
 end
@@ -67,21 +91,13 @@ local function buy()
         local part, prompt = getPrompt(pos)
 
         if part and prompt then
-            -- Teleport ke depan part (dekat prompt)
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
             goTo(targetPos)
             task.wait(0.3)
-
-            -- Hold E lebih lama
             prompt:Hold(1.5)
-            task.wait(0.5)
-
-            -- Opsional: fire langsung biar mantap
-            -- prompt:InputHoldBegin() 
-            -- task.wait(0.5)
-            -- prompt:InputHoldEnd()
+            task.wait(0.3)
         end
-        -- kalau tidak ada prompt, lewati diam-diam
+        -- kalau tidak ada prompt, lewati
     end
     isRunning = false
 end
