@@ -1,6 +1,4 @@
--- AUTO BUY APARTMENT + SMOOTH TELEPORT
--- UI Dragable + Tombol START BUY APART
-
+-- AUTO BUY APART V3 - RINGAN + TANPA NOTIF
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -8,12 +6,9 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 -- ===== KONFIGURASI =====
 local SPEED = 120
-local ALTITUDE_OFFSET = -8
-local TELEPORT_DELAY = 2
-local BUY_HOLD_TIME = 1
+local ALT_OFFSET = -8
 
--- ===== DAFTAR KOORDINAT APARTEMEN =====
-local apartmentCoords = {
+local coords = {
     Vector3.new(927.98, 10.09, 73.01),
     Vector3.new(898.88, 10.09, 73.32),
     Vector3.new(1019.57, 10.09, 218.32),
@@ -22,204 +17,96 @@ local apartmentCoords = {
     Vector3.new(1107.68, 10.09, 452.43)
 }
 
-local boughtCount = 0
 local isRunning = false
 
--- ===== FUNGSI SMOOTH TELEPORT =====
-local function smoothTeleport(targetPosition)
-    if not targetPosition then return end
+-- ===== GERAK CEPAT KE KOORDINAT =====
+local function goTo(pos)
+    local start = root.Position
+    local bawah = Vector3.new(pos.X, pos.Y - 1, pos.Z)
+    local targetBawah = Vector3.new(pos.X, pos.Y + ALT_OFFSET, pos.Z)
     
-    local startPos = root.Position
-    local endPos = Vector3.new(targetPosition.X, targetPosition.Y + ALTITUDE_OFFSET, targetPosition.Z)
-    local surfacePos = Vector3.new(targetPosition.X, targetPosition.Y, targetPosition.Z)
-    
-    local originalSpeed = humanoid.WalkSpeed
-    humanoid.WalkSpeed = SPEED
-    humanoid.AutoRotate = true
-    
-    -- Turun ke bawah jalan
-    local bawah = Vector3.new(startPos.X, targetPosition.Y - 1, startPos.Z)
+    -- Turun dulu
     root.CFrame = CFrame.new(bawah)
+    task.wait(0.05)
     
-    -- Gerak cepat di bawah tanah menuju target
-    local steps = 30
-    for i = 1, steps do
-        local t = i / steps
-        local lerpPos = startPos:Lerp(endPos, t)
-        root.CFrame = CFrame.new(lerpPos)
-        task.wait(0.05)
+    -- Pindah cepat ke bawah tanah
+    humanoid.WalkSpeed = SPEED
+    for i = 1, 20 do
+        local t = i / 20
+        root.CFrame = CFrame.new(start:Lerp(targetBawah, t))
+        task.wait(0.02)
     end
     
-    -- Naik ke permukaan
-    for i = 1, 10 do
-        local t = i / 10
-        local naikPos = Vector3.new(
-            endPos.X,
-            endPos.Y + (targetPosition.Y - endPos.Y) * t,
-            endPos.Z
-        )
-        root.CFrame = CFrame.new(naikPos)
-        task.wait(0.05)
+    -- Naik ke posisi sebenarnya
+    for i = 1, 8 do
+        local t = i / 8
+        local naik = Vector3.new(pos.X, targetBawah.Y + (pos.Y - targetBawah.Y) * t, pos.Z)
+        root.CFrame = CFrame.new(naik)
+        task.wait(0.02)
     end
     
-    root.CFrame = CFrame.new(targetPosition)
-    humanoid.WalkSpeed = originalSpeed
+    root.CFrame = CFrame.new(pos)
+    humanoid.WalkSpeed = 16
 end
 
--- ===== FUNGSI CEK APARTEMEN KOSONG =====
-local function isApartmentAvailable(pos)
-    -- Cari ProximityPrompt terdekat dari posisi
-    for _, prompt in pairs(workspace:GetDescendants()) do
-        if prompt:IsA("ProximityPrompt") then
-            local parent = prompt.Parent
+-- ===== CEK APART KOSONG =====
+local function getAvailable(pos)
+    for _, p in pairs(workspace:GetDescendants()) do
+        if p:IsA("ProximityPrompt") then
+            local parent = p.Parent
             if parent and parent:IsA("BasePart") then
-                local dist = (parent.Position - pos).Magnitude
-                if dist < 10 then
-                    local text = prompt.ActionText or ""
-                    if text:lower():find("purchase") or text:lower():find("beli") or text:lower():find("buy") then
-                        if prompt.Enabled == true then
-                            return true, parent, prompt
-                        end
+                if (parent.Position - pos).Magnitude < 15 then
+                    local txt = p.ActionText or ""
+                    if (txt:lower():find("purchase") or txt:lower():find("beli")) and p.Enabled == true then
+                        return parent, p
                     end
                 end
             end
         end
     end
-    return false, nil, nil
+    return nil, nil
 end
 
--- ===== FUNGSI BELI =====
-local function buyApartment(parentPart, prompt)
-    if not parentPart or not prompt then return false end
-    
-    smoothTeleport(parentPart.Position + Vector3.new(0, 2, 0))
-    task.wait(0.5)
-    prompt:Hold(BUY_HOLD_TIME)
-    task.wait(1)
-    
-    -- Cek apakah masih ada prompt (kalau hilang berarti berhasil)
-    if not prompt.Enabled or not prompt.Parent then
-        return true
-    end
-    return false
-end
-
--- ===== AUTO BUY LOOP =====
-local function startAutoBuy()
-    if isRunning then return end
-    isRunning = true
-    boughtCount = 0
-    
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "🔄 AUTO BUY START",
-        Text = "Mencari apartemen kosong...",
-        Duration = 3
-    })
-    
-    for i, coord in ipairs(apartmentCoords) do
-        if not isRunning then break end
-        
-        local available, part, prompt = isApartmentAvailable(coord)
-        
-        if available then
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "🏠 Apartemen Ditemukan",
-                Text = "Koordinat " .. i .. " masih kosong, membeli...",
-                Duration = 3
-            })
-            
-            local success = buyApartment(part, prompt)
-            if success then
-                boughtCount = boughtCount + 1
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "✅ Berhasil",
-                    Text = "Apartemen " .. i .. " berhasil dibeli!",
-                    Duration = 3
-                })
-            else
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "⚠️ Gagal",
-                    Text = "Apartemen " .. i .. " mungkin sudah dibeli orang lain",
-                    Duration = 3
-                })
-            end
-        else
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "⏭️ Lewati",
-                Text = "Koordinat " .. i .. " sudah dibeli / tidak ada prompt",
-                Duration = 2
-            })
+-- ===== PROSES BELI =====
+local function buy()
+    for _, pos in ipairs(coords) do
+        local part, prompt = getAvailable(pos)
+        if part and prompt then
+            goTo(part.Position + Vector3.new(0, 2, 0))
+            task.wait(0.3)
+            prompt:Hold(1)
+            task.wait(0.5)
         end
-        
-        task.wait(TELEPORT_DELAY)
     end
-    
     isRunning = false
-    game.StarterGui:SetCore("SendNotification", {
-        Title = "🏁 Selesai",
-        Text = "Total apartemen dibeli: " .. boughtCount,
-        Duration = 5
-    })
 end
 
--- ===== UI DRAGABLE =====
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoBuyUI"
-screenGui.Parent = player.PlayerGui
+-- ===== UI =====
+local gui = Instance.new("ScreenGui")
+gui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 60)
-frame.Position = UDim2.new(0.5, -110, 0.8, 0)
+frame.Size = UDim2.new(0, 200, 0, 50)
+frame.Position = UDim2.new(0.5, -100, 0.85, 0)
 frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-frame.BackgroundTransparency = 0.15
-frame.BorderSizePixel = 0
+frame.BackgroundTransparency = 0.1
 frame.Active = true
 frame.Draggable = true
-frame.Parent = screenGui
+frame.Parent = gui
 
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 12)
-corner.Parent = frame
+local btn = Instance.new("TextButton")
+btn.Size = UDim2.new(0, 170, 0, 35)
+btn.Position = UDim2.new(0.5, -85, 0.5, -17.5)
+btn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
+btn.Text = "🚀 START BUY APART"
+btn.TextColor3 = Color3.fromRGB(255,255,255)
+btn.TextSize = 14
+btn.Font = Enum.Font.GothamBold
+btn.BorderSizePixel = 0
+btn.Parent = frame
 
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 180, 0, 40)
-button.Position = UDim2.new(0.5, -90, 0.5, -20)
-button.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
-button.BackgroundTransparency = 0.1
-button.Text = "🚀 START BUY APART"
-button.TextColor3 = Color3.fromRGB(255, 255, 255)
-button.TextSize = 16
-button.Font = Enum.Font.GothamBold
-button.BorderSizePixel = 0
-button.Parent = frame
-
-local btnCorner = Instance.new("UICorner")
-btnCorner.CornerRadius = UDim.new(0, 8)
-btnCorner.Parent = button
-
-button.MouseEnter:Connect(function()
-    button.BackgroundColor3 = Color3.fromRGB(0, 220, 100)
+btn.MouseButton1Click:Connect(function()
+    if isRunning then return end
+    isRunning = true
+    buy()
 end)
-button.MouseLeave:Connect(function()
-    button.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
-end)
-
-button.MouseButton1Click:Connect(function()
-    if isRunning then
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "⏳ Sedang Berjalan",
-            Text = "Tunggu sampai selesai!",
-            Duration = 2
-        })
-        return
-    end
-    startAutoBuy()
-end)
-
-game.StarterGui:SetCore("SendNotification", {
-    Title = "✅ UI Siap",
-    Text = "Klik START BUY APART untuk memulai",
-    Duration = 4
-})
-
-print("✅ Auto Buy Apartment siap. Klik tombol START BUY APART.")
