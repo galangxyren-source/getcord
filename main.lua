@@ -1,4 +1,4 @@
--- AUTO BUY APART V12 - TURUN DULU + LAMBAT BANGET
+-- AUTO BUY APART V14 - PAKSA TEMBUS TANAH (COLLISION OFF)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -7,10 +7,10 @@ local TweenService = game:GetService("TweenService")
 
 local ALT_OFFSET = -8
 
--- ===== DURASI GERAK (semakin besar, semakin lambat) =====
-local DURASI_TURUN = 6        -- turun ke bawah permukaan
-local DURASI_JALAN = 14       -- jalan horizontal di bawah tanah
-local DURASI_NAIK = 6         -- naik ke permukaan
+-- ===== DURASI GERAK =====
+local DURASI_TURUN = 5
+local DURASI_JALAN = 14
+local DURASI_NAIK = 5
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -22,6 +22,15 @@ local coords = {
 }
 
 local isRunning = false
+
+-- ===== FUNGSI NONAKTIFKAN COLLISION =====
+local function setCollision(bool)
+    for _, v in pairs(character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = bool
+        end
+    end
+end
 
 -- ===== GERAK PAKAI TWEEN =====
 local function tweenTo(pos, durasi)
@@ -56,19 +65,25 @@ local function buy()
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
 
-            -- 1. TURUN DULU ke bawah permukaan (tanpa naik dulu)
+            -- ===== MATIKAN COLLISION =====
+            setCollision(false)
+
+            -- 1. Turun ke bawah permukaan
             local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
             tweenTo(below, DURASI_TURUN)
             task.wait(0.2)
 
-            -- 2. Jalan horizontal di bawah tanah menuju target
+            -- 2. Jalan horizontal di bawah tanah
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
             tweenTo(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
-            -- 3. NAIK ke permukaan
+            -- 3. Naik ke permukaan
             tweenTo(targetPos, DURASI_NAIK)
             task.wait(0.2)
+
+            -- ===== NYALAKAN COLLISION =====
+            setCollision(true)
 
             -- 4. Hold E
             prompt:Hold(1.5)
