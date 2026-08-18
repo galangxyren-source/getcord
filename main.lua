@@ -1,4 +1,4 @@
--- AUTO FARM VIA RESPAWN (AMAN DARI ANTI-CHEAT)
+-- AUTO FARM UI SIMPLE (FOKUS FUNGSI)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -7,7 +7,6 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-
 local apartCoords = {
     Vector3.new(927.98, 10.09, 73.01),
     Vector3.new(898.88, 10.09, 73.32),
@@ -26,7 +25,9 @@ local startTime = 0
 
 -- ===== HAPUS GUI LAMA =====
 for _, gui in pairs(player.PlayerGui:GetChildren()) do
-    if gui:IsA("ScreenGui") then gui:Destroy() end
+    if gui:IsA("ScreenGui") then
+        gui:Destroy()
+    end
 end
 
 -- ===== NOTIF =====
@@ -48,33 +49,14 @@ local function antiAFK()
 end
 task.spawn(antiAFK)
 
--- ===== BYPASS =====
-local function bypass()
-    local oldIndex
-    oldIndex = hookmetamethod(game, "__index", function(self, key)
-        if key == "WalkSpeed" and self == humanoid then
-            return 16
-        end
-        return oldIndex(self, key)
-    end)
-end
-task.spawn(bypass)
-
 -- ===== TELEPORT VIA RESPAWN =====
 local function teleportViaDeath(targetPos)
-    -- Matikan karakter
     humanoid.Health = 0
-    
-    -- Tunggu respawn
     local newChar = player.CharacterAdded:Wait()
     character = newChar
     humanoid = character:WaitForChild("Humanoid")
     root = character:WaitForChild("HumanoidRootPart")
-    
-    -- Set posisi spawn ke target
     root.CFrame = CFrame.new(targetPos)
-    
-    -- Noclip sementara biar ga nyangkut
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
             v.CanCollide = false
@@ -104,7 +86,7 @@ local function getPurchasePrompt(pos)
     return nil, nil
 end
 
--- ===== INTERACT E =====
+-- ===== INTERACT =====
 local function pressE()
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
@@ -118,7 +100,6 @@ local function pressE()
     return false
 end
 
--- ===== KLIK DIALOG =====
 local function clickDialog()
     task.wait(0.5)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -133,8 +114,7 @@ local function clickDialog()
     return false
 end
 
--- ===== KLIK BELI ITEM =====
-local function clickBuyItem(name)
+local function clickItem(name)
     task.wait(0.3)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
         for _, btn in pairs(gui:GetDescendants()) do
@@ -148,7 +128,6 @@ local function clickBuyItem(name)
     return false
 end
 
--- ===== KLIK JUMLAH =====
 local function clickAmount(amount)
     task.wait(0.3)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -163,7 +142,6 @@ local function clickAmount(amount)
     return false
 end
 
--- ===== KLIK EXIT =====
 local function clickExit()
     task.wait(0.3)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -178,13 +156,13 @@ local function clickExit()
     return false
 end
 
--- ===== BELI APARTEMEN =====
+-- ===== BELI APART =====
 local function buyApartment()
     for _, pos in ipairs(apartCoords) do
         local part, prompt = getPurchasePrompt(pos)
         if part and prompt then
-            local targetPos = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
-            teleportViaDeath(targetPos)
+            local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
+            teleportViaDeath(target)
             prompt:Hold(1.5)
             pengeluaran = pengeluaran + 500
             return true
@@ -198,9 +176,9 @@ local function buyMaterials(amount)
     teleportViaDeath(NPC_COORD)
     pressE()
     clickDialog()
-    clickBuyItem("Gelatin") clickAmount(amount)
-    clickBuyItem("Sugar Block Bag") clickAmount(amount)
-    clickBuyItem("Water") clickAmount(amount)
+    clickItem("Gelatin") clickAmount(amount)
+    clickItem("Sugar Block Bag") clickAmount(amount)
+    clickItem("Water") clickAmount(amount)
     clickExit()
     pengeluaran = pengeluaran + amount * 190
     pendapatan = pendapatan + amount * 500
@@ -208,6 +186,7 @@ end
 
 -- ===== MAIN LOOP =====
 local function startFarm()
+    if isRunning then return end
     isRunning = true
     startTime = os.time()
     notif("🔥", "Auto Farm dimulai!")
@@ -220,128 +199,83 @@ local function startFarm()
     end
 end
 
--- ===== UI SIMPEL =====
+local function stopFarm()
+    isRunning = false
+    notif("⏹️", "Auto Farm dihentikan!")
+end
+
+-- ===== UI SANGAT SIMPLE =====
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoFarm"
+screenGui.Name = "AF"
 screenGui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 280, 0, 180)
-frame.Position = UDim2.new(0.5, -140, 0.5, -90)
-frame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
-frame.BackgroundTransparency = 0.2
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Position = UDim2.new(0.5, -100, 0.5, -60)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.BackgroundTransparency = 0.3
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = screenGui
-Instance.new("UICorner").CornerRadius = UDim.new(0, 12); frame.Parent = frame
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 260, 0, 30)
-title.Position = UDim2.new(0.5, -130, 0, 5)
+title.Size = UDim2.new(0, 180, 0, 25)
+title.Position = UDim2.new(0.5, -90, 0, 5)
 title.BackgroundTransparency = 1
 title.Text = "🔥 AUTO FARM"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
-title.TextSize = 22
+title.TextSize = 18
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
 local paketLabel = Instance.new("TextLabel")
-paketLabel.Size = UDim2.new(0, 200, 0, 20)
-paketLabel.Position = UDim2.new(0.5, -100, 0, 40)
+paketLabel.Size = UDim2.new(0, 180, 0, 18)
+paketLabel.Position = UDim2.new(0.5, -90, 0, 32)
 paketLabel.BackgroundTransparency = 1
-paketLabel.Text = "📦 PAKET: 1"
-paketLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
-paketLabel.TextSize = 14
-paketLabel.Font = Enum.Font.GothamBold
+paketLabel.Text = "PAKET: 1"
+paketLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+paketLabel.TextSize = 13
+paketLabel.Font = Enum.Font.Gotham
 paketLabel.Parent = frame
 
-local minus = Instance.new("TextButton")
-minus.Size = UDim2.new(0, 35, 0, 30)
-minus.Position = UDim2.new(0.5, -55, 0, 65)
-minus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
-minus.Text = "−"
-minus.TextColor3 = Color3.fromRGB(255,255,255)
-minus.TextSize = 20
-minus.Font = Enum.Font.GothamBold
-minus.BorderSizePixel = 0
-minus.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 6); minus.Parent = frame
-
-local angka = Instance.new("TextLabel")
-angka.Size = UDim2.new(0, 40, 0, 30)
-angka.Position = UDim2.new(0.5, -20, 0, 65)
-angka.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
-angka.Text = "1"
-angka.TextColor3 = Color3.fromRGB(255,255,255)
-angka.TextSize = 18
-angka.Font = Enum.Font.GothamBold
-angka.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 6); angka.Parent = frame
-
-local plus = Instance.new("TextButton")
-plus.Size = UDim2.new(0, 35, 0, 30)
-plus.Position = UDim2.new(0.5, 20, 0, 65)
-plus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
-plus.Text = "+"
-plus.TextColor3 = Color3.fromRGB(255,255,255)
-plus.TextSize = 20
-plus.Font = Enum.Font.GothamBold
-plus.BorderSizePixel = 0
-plus.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 6); plus.Parent = frame
-
-local startBtn = Instance.new("TextButton")
-startBtn.Size = UDim2.new(0, 200, 0, 35)
-startBtn.Position = UDim2.new(0.5, -100, 0, 110)
-startBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
-startBtn.Text = "▶ START"
-startBtn.TextColor3 = Color3.fromRGB(255,255,255)
-startBtn.TextSize = 16
-startBtn.Font = Enum.Font.GothamBold
-startBtn.BorderSizePixel = 0
-startBtn.Parent = frame
-Instance.new("UICorner").CornerRadius = UDim.new(0, 8); startBtn.Parent = frame
+local btnStart = Instance.new("TextButton")
+btnStart.Size = UDim2.new(0, 120, 0, 30)
+btnStart.Position = UDim2.new(0.5, -60, 0, 55)
+btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
+btnStart.Text = "▶ START"
+btnStart.TextColor3 = Color3.fromRGB(255,255,255)
+btnStart.TextSize = 14
+btnStart.Font = Enum.Font.GothamBold
+btnStart.BorderSizePixel = 0
+btnStart.Parent = frame
 
 local runtimeLabel = Instance.new("TextLabel")
-runtimeLabel.Size = UDim2.new(0, 260, 0, 18)
-runtimeLabel.Position = UDim2.new(0.5, -130, 0, 155)
+runtimeLabel.Size = UDim2.new(0, 180, 0, 15)
+runtimeLabel.Position = UDim2.new(0.5, -90, 0, 92)
 runtimeLabel.BackgroundTransparency = 1
-runtimeLabel.Text = "⏱️ 0 m 00 s"
-runtimeLabel.TextColor3 = Color3.fromRGB(180, 180, 210)
-runtimeLabel.TextSize = 12
+runtimeLabel.Text = "⏱️ 0m"
+runtimeLabel.TextColor3 = Color3.fromRGB(150, 150, 200)
+runtimeLabel.TextSize = 11
 runtimeLabel.Font = Enum.Font.Gotham
 runtimeLabel.Parent = frame
 
 -- ===== UI LOGIC =====
-minus.MouseButton1Click:Connect(function()
-    if isRunning then return end
-    local v = tonumber(angka.Text) or 1
-    if v > 1 then v = v - 1; angka.Text = tostring(v); paketLabel.Text = "📦 PAKET: " .. v; jumlahPaket = v end
-end)
-
-plus.MouseButton1Click:Connect(function()
-    if isRunning then return end
-    local v = tonumber(angka.Text) or 1
-    if v < 50 then v = v + 1; angka.Text = tostring(v); paketLabel.Text = "📦 PAKET: " .. v; jumlahPaket = v end
-end)
-
-startBtn.MouseButton1Click:Connect(function()
+btnStart.MouseButton1Click:Connect(function()
     if isRunning then
-        isRunning = false
-        startBtn.Text = "▶ START"
-        startBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
-        notif("⏹️", "Auto Farm dihentikan!")
+        stopFarm()
+        btnStart.Text = "▶ START"
+        btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
         return
     end
-    startBtn.Text = "⏳ PROSES..."
-    startBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+    btnStart.Text = "⏳ PROSES"
+    btnStart.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     task.spawn(function()
         local ok, err = pcall(startFarm)
         if not ok then notif("❌", "Error: " .. tostring(err)) end
         if not isRunning then
-            startBtn.Text = "▶ START"
-            startBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
+            btnStart.Text = "▶ START"
+            btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
         end
     end)
 end)
@@ -353,7 +287,7 @@ task.spawn(function()
             local runtime = os.time() - startTime
             local m = math.floor(runtime / 60)
             local s = runtime % 60
-            runtimeLabel.Text = string.format("⏱️ %d m %02d s", m, s)
+            runtimeLabel.Text = string.format("⏱️ %dm %02ds", m, s)
         end
         task.wait(1)
     end
@@ -367,4 +301,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅", "Auto Farm + Respawn Teleport siap!")
+notif("✅", "UI Simple siap! Tekan Z untuk toggle.")
