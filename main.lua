@@ -1,4 +1,4 @@
--- AUTO BUY APART V14 - PAKSA TEMBUS TANAH (COLLISION OFF)
+-- AUTO BUY APART V16 - PAKSA TEMBUS TANAH (2 METODE)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -6,11 +6,9 @@ local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
 local ALT_OFFSET = -8
-
--- ===== DURASI GERAK =====
-local DURASI_TURUN = 5
-local DURASI_JALAN = 14
-local DURASI_NAIK = 5
+local DURASI_TURUN = 2
+local DURASI_JALAN = 5
+local DURASI_NAIK = 2
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -23,13 +21,35 @@ local coords = {
 
 local isRunning = false
 
--- ===== FUNGSI NONAKTIFKAN COLLISION =====
-local function setCollision(bool)
+-- ===== METODE 1: NOCLIP (COLLISION OFF + TERRAIN) =====
+local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
-            v.CanCollide = bool
+            v.CanCollide = not state
         end
     end
+    if state then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+    else
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+    end
+end
+
+-- ===== METODE 2: DORONG PAKAI VELOCITY (BIAR TEMBUS) =====
+local function pushDown(targetPos)
+    local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(0, 1e6, 0)
+    bodyVelocity.Velocity = Vector3.new(0, -30, 0)
+    bodyVelocity.Parent = root
+    
+    task.wait(0.5)
+    
+    -- Pindahkan paksa ke bawah
+    root.CFrame = CFrame.new(below)
+    bodyVelocity:Destroy()
 end
 
 -- ===== GERAK PAKAI TWEEN =====
@@ -65,27 +85,26 @@ local function buy()
         if part and prompt then
             local targetPos = part.Position + (part.CFrame.LookVector * 3) + Vector3.new(0, 2, 0)
 
-            -- ===== MATIKAN COLLISION =====
-            setCollision(false)
-
-            -- 1. Turun ke bawah permukaan
-            local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
-            tweenTo(below, DURASI_TURUN)
+            -- ===== AKTIFKAN NOCLIP =====
+            noclip(true)
+            
+            -- ===== TURUN PAKAI VELOCITY (BIAR TEMBUS) =====
+            pushDown(targetPos)
             task.wait(0.2)
 
-            -- 2. Jalan horizontal di bawah tanah
+            -- ===== JALAN DI BAWAH TANAH =====
             local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
             tweenTo(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
-            -- 3. Naik ke permukaan
+            -- ===== NAIK KE PERMUKAAN =====
             tweenTo(targetPos, DURASI_NAIK)
             task.wait(0.2)
 
-            -- ===== NYALAKAN COLLISION =====
-            setCollision(true)
+            -- ===== MATIKAN NOCLIP =====
+            noclip(false)
 
-            -- 4. Hold E
+            -- ===== HOLD E =====
             prompt:Hold(1.5)
             task.wait(0.3)
         end
