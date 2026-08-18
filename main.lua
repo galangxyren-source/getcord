@@ -1,14 +1,14 @@
--- TAHAP 3: BELI APARTEMEN (1 KOORDINAT)
+-- TAHAP 4: BELI BAHAN (1 PAKET)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
-local APART_COORD = Vector3.new(927.98, 10.09, 73.01)
+local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
 local BAWAH_Y = -1
 
 local function notif(txt)
-    game.StarterGui:SetCore("SendNotification", {Title = "APART", Text = txt, Duration = 3})
+    game.StarterGui:SetCore("SendNotification", {Title = "BAHAN", Text = txt, Duration = 3})
 end
 
 local function noclip(state)
@@ -26,38 +26,91 @@ local function noclip(state)
     end
 end
 
-local function getPrompt(pos)
+local function pressE()
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
             local parent = p.Parent
-            if parent and parent:IsA("BasePart") and (parent.Position - pos).Magnitude < 25 then
-                local txt = p.ActionText or ""
-                if txt:lower():find("purchase") or txt:lower():find("beli") then
-                    return parent, p
-                end
+            if parent and parent:IsA("BasePart") and (parent.Position - root.Position).Magnitude < 10 then
+                p:Hold(0.5)
+                return true
             end
         end
     end
-    return nil, nil
+    return false
 end
 
-notif("Cari apartemen...")
-local part, prompt = getPrompt(APART_COORD)
-
-if part and prompt then
-    notif("Apart ditemukan! Beli...")
-    local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
-    noclip(true)
-    root.CFrame = CFrame.new(target.X, BAWAH_Y, target.Z)
-    task.wait(0.2)
-    for i = 1, 10 do
-        local newY = BAWAH_Y + (target.Y - BAWAH_Y) * (i / 10)
-        root.CFrame = CFrame.new(target.X, newY, target.Z)
-        task.wait(0.03)
+local function clickDialog()
+    task.wait(0.5)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find("You here to buy?") then
+                btn:Click()
+                task.wait(0.5)
+                return true
+            end
+        end
     end
-    noclip(false)
-    prompt:Hold(1.5)
-    notif("Apartemen berhasil dibeli!")
-else
-    notif("Tidak ada apartemen kosong!")
+    return false
 end
+
+local function clickItem(name)
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(name) then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function clickAmount(amount)
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):find(tostring(amount)) then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+local function clickExit()
+    task.wait(0.3)
+    for _, gui in pairs(player.PlayerGui:GetChildren()) do
+        for _, btn in pairs(gui:GetDescendants()) do
+            if (btn:IsA("TextButton") or btn:IsA("ImageButton")) and (btn.Text or ""):lower():find("exit") then
+                btn:Click()
+                task.wait(0.3)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+notif("Menuju NPC...")
+noclip(true)
+root.CFrame = CFrame.new(NPC_COORD.X, BAWAH_Y, NPC_COORD.Z)
+task.wait(0.2)
+for i = 1, 10 do
+    local newY = BAWAH_Y + (NPC_COORD.Y - BAWAH_Y) * (i / 10)
+    root.CFrame = CFrame.new(NPC_COORD.X, newY, NPC_COORD.Z)
+    task.wait(0.03)
+end
+noclip(false)
+
+pressE()
+clickDialog()
+clickItem("Gelatin") clickAmount(1)
+clickItem("Sugar Block Bag") clickAmount(1)
+clickItem("Water") clickAmount(1)
+clickExit()
+
+notif("Bahan 1 paket selesai dibeli!")
