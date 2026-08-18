@@ -1,10 +1,10 @@
--- JALAN NORMAL MOVETO (LAMBAT & AMAN)
+-- TURUN LEBIH DALAM + KUNCI POSISI Y
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 
-local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
+local TARGET_Y = -5  -- turun 5 stud di bawah permukaan (cukup dalam)
 
 -- ===== NOTIF =====
 local function notif(title, text)
@@ -15,7 +15,7 @@ local function notif(title, text)
     })
 end
 
--- ===== NOCLIP (TAPI TIDAK PAKAI GRAVITASI 0) =====
+-- ===== NOCLIP + PLATFORMSTAND =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -26,64 +26,59 @@ local function noclip(state)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
         humanoid.PlatformStand = true
+        workspace.Gravity = 0
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
         humanoid.PlatformStand = false
+        workspace.Gravity = 196.2
     end
 end
 
-notif("🔥 TEST", "Script berjalan! Mulai dalam 2 detik...")
-task.wait(2)
-
--- ===== NOCLIP ON =====
+notif("🌀", "Noclip aktif! Turun ke bawah...")
 noclip(true)
-notif("🌀", "Noclip aktif!")
 
--- ===== JALAN NORMAL PAKAI MOVETO =====
-notif("🚶", "Jalan ke NPC (kira-kira 60 detik)...")
+-- ===== TURUN BERTAHAP =====
+local startY = root.Position.Y
+local steps = 30
 
--- Hitung jarak dan estimasi waktu
-local distance = (root.Position - NPC_COORD).Magnitude
-local speed = 16  -- kecepatan normal Roblox
-local estimatedTime = distance / speed
-notif("⏱️", "Estimasi: " .. math.floor(estimatedTime) .. " detik")
+for i = 1, steps do
+    local t = i / steps
+    local newY = startY + (TARGET_Y - startY) * t
+    root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+    task.wait(0.02)
+end
 
-humanoid.WalkSpeed = speed
-humanoid:MoveTo(NPC_COORD)
+-- ===== KUNCI POSISI Y (CEGAH NAIK) =====
+notif("🔒", "Posisi terkunci di Y = " .. TARGET_Y)
 
--- Tunggu sampai sampai
-while (root.Position - NPC_COORD).Magnitude > 4 do
+-- Loop kecil buat jaga posisi
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if root.Position.Y > TARGET_Y + 0.5 then
+            root.CFrame = CFrame.new(root.Position.X, TARGET_Y, root.Position.Z)
+        end
+    end
+end)
+
+notif("✅", "Berhasil turun ke bawah! Coba jalan...")
+
+-- ===== TEST JALAN DI BAWAH =====
+notif("🚶", "Jalan di bawah tanah selama 5 detik...")
+local startPos = root.Position
+for i = 1, 50 do
+    local pos = Vector3.new(
+        startPos.X + i * 0.5,
+        TARGET_Y,
+        startPos.Z + math.sin(i * 0.1) * 0.5
+    )
+    root.CFrame = CFrame.new(pos)
     task.wait(0.1)
 end
 
-notif("✅", "Sampai di NPC!")
-
--- ===== INTERACT E =====
-notif("🖐️", "Mencari ProximityPrompt...")
-local found = false
-
-for _, p in pairs(workspace:GetDescendants()) do
-    if p:IsA("ProximityPrompt") and p.Enabled == true then
-        local parent = p.Parent
-        if parent and parent:IsA("BasePart") then
-            local dist = (parent.Position - root.Position).Magnitude
-            if dist < 15 then
-                notif("🖐️", "Prompt ditemukan! Hold E...")
-                p:Hold(1)
-                found = true
-                break
-            end
-        end
-    end
-end
-
-if not found then
-    notif("❌", "Tidak ada prompt di sekitar!")
-end
+notif("🏁", "Test selesai!")
 
 -- ===== NOCLIP OFF =====
 noclip(false)
 notif("🔒", "Noclip mati!")
-
-notif("🏁", "Test selesai!")
