@@ -1,14 +1,14 @@
--- AUTO BUY APART V16 - FIX TURUN KE BAWAH
+-- AUTO BUY APART V16 - FIX JATUH/TERBANG
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
-local ALT_OFFSET = -0.5        -- TURUN SEDIKIT (GAK KE VOID)
-local DURASI_TURUN = 5
-local DURASI_JALAN = 20
-local DURASI_NAIK = 5
+local ALT_OFFSET = -1.5
+local DURASI_TURUN = 2
+local DURASI_JALAN = 5
+local DURASI_NAIK = 2
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -21,7 +21,7 @@ local coords = {
 
 local isRunning = false
 
--- ===== NOCLIP =====
+-- ===== NOCLIP + PLATFORMSTAND =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -31,17 +31,18 @@ local function noclip(state)
     if state then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        humanoid.PlatformStand = true   -- <-- CEK POSISI BIAR GA JATUH
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid.PlatformStand = false
     end
 end
 
--- ===== TURUN PAKAI CFRAME BERTAHAP (BIAR TEMBUS PELAN) =====
+-- ===== TURUN PAKAI CFRAME BERTAHAP =====
 local function goDown(targetPos)
     local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
     
-    -- Turun bertahap 20 step biar tembus pelan
     for i = 1, 20 do
         local t = i / 20
         local newPos = Vector3.new(
@@ -71,7 +72,7 @@ local function goUp(targetPos)
     end
 end
 
--- ===== GERAK PAKAI TWEEN (HORIZONTAL) =====
+-- ===== GERAK PAKAI TWEEN =====
 local function tweenTo(pos, durasi)
     local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
     tween:Play()
@@ -118,7 +119,7 @@ local function buy()
 
             noclip(true)
             
-            -- 1. TURUN PELAN (pakai CFrame bertahap)
+            -- 1. TURUN PELAN
             goDown(targetPos)
             task.wait(0.2)
 
