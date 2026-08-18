@@ -1,8 +1,9 @@
--- TEST JALAN + INTERACT (TANPA UI)
+-- JALAN CEPAT + NOCLIP + INTERACT (TANPA UI)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
+local TweenService = game:GetService("TweenService")
 
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
 
@@ -15,17 +16,39 @@ local function notif(title, text)
     })
 end
 
-notif("🔥 TEST", "Script berjalan! Mulai dalam 3 detik...")
-task.wait(3)
-
--- ===== JALAN =====
-notif("🚶", "Jalan ke NPC...")
-humanoid.WalkSpeed = 20
-humanoid:MoveTo(NPC_COORD)
-
-while (root.Position - NPC_COORD).Magnitude > 4 do
-    task.wait(0.2)
+-- ===== NOCLIP =====
+local function noclip(state)
+    for _, v in pairs(character:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.CanCollide = not state
+        end
+    end
+    if state then
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        humanoid.PlatformStand = true
+        workspace.Gravity = 0
+    else
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid.PlatformStand = false
+        workspace.Gravity = 196.2
+    end
 end
+
+notif("🔥 TEST", "Script berjalan! Mulai dalam 2 detik...")
+task.wait(2)
+
+-- ===== NOCLIP ON =====
+noclip(true)
+notif("🌀", "Noclip aktif!")
+
+-- ===== JALAN CEPAT PAKAI TWEEN =====
+notif("🚀", "Terbang ke NPC...")
+
+local tween = TweenService:Create(root, TweenInfo.new(2, Enum.EasingStyle.Linear), {CFrame = CFrame.new(NPC_COORD)})
+tween:Play()
+tween.Completed:Wait()
 
 notif("✅", "Sampai di NPC!")
 
@@ -38,9 +61,9 @@ for _, p in pairs(workspace:GetDescendants()) do
         local parent = p.Parent
         if parent and parent:IsA("BasePart") then
             local dist = (parent.Position - root.Position).Magnitude
-            if dist < 10 then
+            if dist < 15 then
                 notif("🖐️", "Prompt ditemukan! Hold E...")
-                p:Hold(0.5)
+                p:Hold(1)
                 found = true
                 break
             end
@@ -51,5 +74,9 @@ end
 if not found then
     notif("❌", "Tidak ada prompt di sekitar!")
 end
+
+-- ===== NOCLIP OFF =====
+noclip(false)
+notif("🔒", "Noclip mati!")
 
 notif("🏁", "Test selesai!")
