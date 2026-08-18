@@ -1,8 +1,41 @@
--- AUTO FARM FULL - UI SIMPEL (GAK GANGGU HUD)
+-- AUTO FARM FULL + BYPASS + ANTI-AFK (UI AMAN)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
+local UserInputService = game:GetService("UserInputService")
+local VirtualUser = game:GetService("VirtualUser")
+
+-- ===== ANTI-AFK =====
+local function antiAFK()
+    local vu = VirtualUser
+    vu:CaptureController()
+    vu:ClickButton2(Vector2.new())
+    game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvent"):FireServer("AntiAFK")
+    task.wait(60)
+    antiAFK()
+end
+
+-- ===== BYPASS SISTEM =====
+local function bypass()
+    -- Bypass deteksi CFrame
+    local oldIndex
+    oldIndex = hookmetamethod(game, "__index", function(self, key)
+        if key == "WalkSpeed" and self == humanoid then
+            return 16
+        end
+        return oldIndex(self, key)
+    end)
+    
+    -- Bypass deteksi teleport
+    local oldCFrame
+    oldCFrame = hookmetamethod(root, "__newindex", function(self, key, value)
+        if key == "CFrame" and isRunning then
+            return
+        end
+        return oldCFrame(self, key, value)
+    end)
+end
 
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
@@ -23,10 +56,13 @@ local jumlahPaket = 1
 local siklus = 0
 local pengeluaran = 0
 local pendapatan = 0
+local startTime = 0
 
 -- ===== HAPUS GUI LAMA =====
 for _, gui in pairs(player.PlayerGui:GetChildren()) do
-    if gui:IsA("ScreenGui") then gui:Destroy() end
+    if gui:IsA("ScreenGui") then
+        gui:Destroy()
+    end
 end
 
 -- ===== NOTIF =====
@@ -83,8 +119,8 @@ end
 local function walkSlow(pos)
     humanoid.WalkSpeed = 10
     humanoid:MoveTo(pos)
-    local startTime = os.time()
-    while (root.Position - pos).Magnitude > 4 and os.time() - startTime < 70 do
+    local start = os.time()
+    while (root.Position - pos).Magnitude > 4 and os.time() - start < 70 do
         task.wait(0.1)
     end
 end
@@ -219,6 +255,7 @@ end
 -- ===== MAIN LOOP =====
 local function startFarm()
     isRunning = true
+    startTime = os.time()
     notif("🔥", "Auto Farm dimulai!")
     while isRunning do
         siklus = siklus + 1
@@ -229,7 +266,7 @@ local function startFarm()
     end
 end
 
--- ===== UI SIMPEL =====
+-- ===== UI SIMPEL (AMAN HUD) =====
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AutoFarm"
 screenGui.Parent = player.PlayerGui
@@ -238,7 +275,7 @@ local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 280, 0, 180)
 frame.Position = UDim2.new(0.5, -140, 0.5, -90)
 frame.BackgroundColor3 = Color3.fromRGB(15, 15, 35)
-frame.BackgroundTransparency = 0.15
+frame.BackgroundTransparency = 0.2
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
@@ -364,7 +401,6 @@ end)
 
 -- ===== UPDATE RUNTIME =====
 task.spawn(function()
-    local startTime = os.time()
     while true do
         if isRunning then
             local runtime = os.time() - startTime
@@ -377,11 +413,17 @@ task.spawn(function()
 end)
 
 -- ===== TOGGLE UI =====
-game:GetService("UserInputService").InputBegan:Connect(function(input, p)
+UserInputService.InputBegan:Connect(function(input, p)
     if p then return end
     if input.KeyCode == Enum.KeyCode.Z then
         screenGui.Enabled = not screenGui.Enabled
     end
 end)
 
-notif("✅", "Auto Farm siap! Tekan Z untuk toggle UI.")
+-- ===== ANTI-AFK =====
+task.spawn(antiAFK)
+
+-- ===== BYPASS =====
+task.spawn(bypass)
+
+notif("✅", "Auto Farm + Bypass + Anti-AFK siap!")
