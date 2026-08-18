@@ -1,14 +1,14 @@
--- AUTO BUY APART V20 - TEMBUS TAPI TIDAK KE VOID
+-- AUTO BUY APART V16 - FIX TURUN KE BAWAH
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
-local BAWAH_PERMUKAAN = -0.5    -- <-- HANYA TURUN 0.5 STUD DI BAWAH TANAH
-local DURASI_TURUN = 5.5
-local DURASI_JALAN = 25
-local DURASI_NAIK = 5.5
+local ALT_OFFSET = -0.5        -- TURUN SEDIKIT (GAK KE VOID)
+local DURASI_TURUN = 5
+local DURASI_JALAN = 20
+local DURASI_NAIK = 5
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -21,7 +21,7 @@ local coords = {
 
 local isRunning = false
 
--- ===== NOCLIP + CEK POSISI AGAR TIDAK JATUH =====
+-- ===== NOCLIP =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -31,42 +31,48 @@ local function noclip(state)
     if state then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid.PlatformStand = true   -- CEK POSISI AGAR TIDAK JATUH
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-        humanoid.PlatformStand = false
     end
 end
 
--- ===== TURUN PELAN (STEP BY STEP) =====
+-- ===== TURUN PAKAI CFRAME BERTAHAP (BIAR TEMBUS PELAN) =====
 local function goDown(targetPos)
-    local startY = root.Position.Y
-    local targetY = targetPos.Y + BAWAH_PERMUKAAN
+    local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
     
-    for i = 1, 15 do
-        local t = i / 15
-        local newY = startY + (targetY - startY) * t
-        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+    -- Turun bertahap 20 step biar tembus pelan
+    for i = 1, 20 do
+        local t = i / 20
+        local newPos = Vector3.new(
+            root.Position.X,
+            root.Position.Y + (below.Y - root.Position.Y) * t,
+            root.Position.Z
+        )
+        root.CFrame = CFrame.new(newPos)
         task.wait(0.03)
     end
 end
 
--- ===== NAIK PELAN (STEP BY STEP) =====
+-- ===== NAIK PAKAI CFRAME BERTAHAP =====
 local function goUp(targetPos)
     local startY = root.Position.Y
     local targetY = targetPos.Y + 2
     
-    for i = 1, 15 do
-        local t = i / 15
-        local newY = startY + (targetY - startY) * t
-        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+    for i = 1, 20 do
+        local t = i / 20
+        local newPos = Vector3.new(
+            root.Position.X,
+            startY + (targetY - startY) * t,
+            root.Position.Z
+        )
+        root.CFrame = CFrame.new(newPos)
         task.wait(0.03)
     end
 end
 
 -- ===== GERAK PAKAI TWEEN (HORIZONTAL) =====
-local function tweenHorizontal(pos, durasi)
+local function tweenTo(pos, durasi)
     local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
     tween:Play()
     tween.Completed:Wait()
@@ -112,13 +118,13 @@ local function buy()
 
             noclip(true)
             
-            -- 1. TURUN PELAN (HANYA 0.5 STUD)
+            -- 1. TURUN PELAN (pakai CFrame bertahap)
             goDown(targetPos)
             task.wait(0.2)
 
-            -- 2. JALAN HORIZONTAL DI BAWAH PERMUKAAN
-            local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + BAWAH_PERMUKAAN, targetPos.Z)
-            tweenHorizontal(bawahTarget, DURASI_JALAN)
+            -- 2. JALAN DI BAWAH TANAH
+            local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
+            tweenTo(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
             -- 3. NAIK PELAN
