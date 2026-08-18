@@ -6,9 +6,9 @@ local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
 local BAWAH_PERMUKAAN = -0.5    -- <-- HANYA TURUN 0.5 STUD DI BAWAH TANAH
-local DURASI_TURUN = 1.5
-local DURASI_JALAN = 5
-local DURASI_NAIK = 1.5
+local DURASI_TURUN = 5.5
+local DURASI_JALAN = 25
+local DURASI_NAIK = 5.5
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
