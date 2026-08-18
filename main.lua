@@ -1,14 +1,14 @@
--- AUTO BUY APART V16 - FILTER PURCHASE (TEPAT)
+-- AUTO BUY APART V20 - TEMBUS TAPI TIDAK KE VOID
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
 local TweenService = game:GetService("TweenService")
 
-local ALT_OFFSET = -0.1
-local DURASI_TURUN = 8
-local DURASI_JALAN = 17
-local DURASI_NAIK = 5
+local BAWAH_PERMUKAAN = -0.5    -- <-- HANYA TURUN 0.5 STUD DI BAWAH TANAH
+local DURASI_TURUN = 1.5
+local DURASI_JALAN = 5
+local DURASI_NAIK = 1.5
 
 local coords = {
     Vector3.new(927.98, 10.09, 73.01),
@@ -21,7 +21,7 @@ local coords = {
 
 local isRunning = false
 
--- ===== NOCLIP =====
+-- ===== NOCLIP + CEK POSISI AGAR TIDAK JATUH =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -31,33 +31,48 @@ local function noclip(state)
     if state then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        humanoid.PlatformStand = true   -- CEK POSISI AGAR TIDAK JATUH
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid.PlatformStand = false
     end
 end
 
--- ===== DORONG PAKAI VELOCITY (BIAR TEMBUS) =====
-local function pushDown(targetPos)
-    local below = Vector3.new(root.Position.X, targetPos.Y + ALT_OFFSET, root.Position.Z)
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(0, 1e6, 0)
-    bodyVelocity.Velocity = Vector3.new(0, -30, 0)
-    bodyVelocity.Parent = root
+-- ===== TURUN PELAN (STEP BY STEP) =====
+local function goDown(targetPos)
+    local startY = root.Position.Y
+    local targetY = targetPos.Y + BAWAH_PERMUKAAN
     
-    task.wait(0.5)
-    root.CFrame = CFrame.new(below)
-    bodyVelocity:Destroy()
+    for i = 1, 15 do
+        local t = i / 15
+        local newY = startY + (targetY - startY) * t
+        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+        task.wait(0.03)
+    end
 end
 
--- ===== GERAK PAKAI TWEEN =====
-local function tweenTo(pos, durasi)
+-- ===== NAIK PELAN (STEP BY STEP) =====
+local function goUp(targetPos)
+    local startY = root.Position.Y
+    local targetY = targetPos.Y + 2
+    
+    for i = 1, 15 do
+        local t = i / 15
+        local newY = startY + (targetY - startY) * t
+        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+        task.wait(0.03)
+    end
+end
+
+-- ===== GERAK PAKAI TWEEN (HORIZONTAL) =====
+local function tweenHorizontal(pos, durasi)
     local tween = TweenService:Create(root, TweenInfo.new(durasi, Enum.EasingStyle.Linear), {CFrame = CFrame.new(pos)})
     tween:Play()
     tween.Completed:Wait()
 end
 
--- ===== CEK PROMPT (HANYA PURCHASE, BUKAN OPEN) =====
+-- ===== CEK PROMPT (HANYA PURCHASE) =====
 local function getPurchasePrompt(pos)
     local candidates = {}
     
@@ -68,7 +83,6 @@ local function getPurchasePrompt(pos)
                 local dist = (parent.Position - pos).Magnitude
                 if dist < 25 then
                     local txt = p.ActionText or ""
-                    -- Filter KETAT: hanya "purchase" / "beli", IGNORE "open"
                     local isPurchase = txt:lower():find("purchase") or txt:lower():find("beli")
                     local isOpen = txt:lower():find("open")
                     
@@ -80,7 +94,6 @@ local function getPurchasePrompt(pos)
         end
     end
     
-    -- Pilih yang terdekat
     if #candidates > 0 then
         table.sort(candidates, function(a, b) return a.dist < b.dist end)
         return candidates[1].part, candidates[1].prompt
@@ -99,19 +112,21 @@ local function buy()
 
             noclip(true)
             
-            pushDown(targetPos)
+            -- 1. TURUN PELAN (HANYA 0.5 STUD)
+            goDown(targetPos)
             task.wait(0.2)
 
-            local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + ALT_OFFSET, targetPos.Z)
-            tweenTo(bawahTarget, DURASI_JALAN)
+            -- 2. JALAN HORIZONTAL DI BAWAH PERMUKAAN
+            local bawahTarget = Vector3.new(targetPos.X, targetPos.Y + BAWAH_PERMUKAAN, targetPos.Z)
+            tweenHorizontal(bawahTarget, DURASI_JALAN)
             task.wait(0.2)
 
-            tweenTo(targetPos, DURASI_NAIK)
+            -- 3. NAIK PELAN
+            goUp(targetPos)
             task.wait(0.2)
 
             noclip(false)
 
-            -- HOLD E (PASTI PURCHASE)
             prompt:Hold(1.5)
             task.wait(0.3)
         end
