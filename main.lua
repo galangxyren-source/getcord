@@ -7,7 +7,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local KEDALAMAN_TURUN = -0.020   -- SANGAT TIPIS (0.05 stud)
+local KEDALAMAN_TURUN = -0.050   -- SANGAT TIPIS (0.05 stud)
 
 local locations = {
     {apart = Vector3.new(898.89, 9.98, 75.52), cook = Vector3.new(898.62, 10.09, 38.48)},
