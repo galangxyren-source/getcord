@@ -1,14 +1,13 @@
--- AUTO FARM - TURUN TIPIS + NOCLIP TOTAL + FLY
+-- AUTO FARM - TEMBUS TOTAL + FLY PASTI
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
-local TweenService = game:GetService("TweenService")
 
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local KEDALAMAN_TURUN = -0.05   -- TIPIS (sesuai permintaan)
+local BAWAH_Y = -0.05
 
 local locations = {
     {apart = Vector3.new(898.89, 9.98, 75.52), cook = Vector3.new(898.62, 10.09, 38.48)},
@@ -33,7 +32,26 @@ local function notif(text)
     game.StarterGui:SetCore("SendNotification", {Title = "Auto Farm", Text = text, Duration = 4})
 end
 
--- ===== NOCLIP TOTAL + FLY =====
+-- =====================================================
+-- ===== NOCLIP TOTAL + FLY (PAKAI BODYVELOCITY) =====
+-- =====================================================
+local flyBV = nil
+
+local function setFly(state)
+    if state then
+        if flyBV then flyBV:Destroy() end
+        flyBV = Instance.new("BodyVelocity")
+        flyBV.MaxForce = Vector3.new(0, 1e6, 0)
+        flyBV.Velocity = Vector3.new(0, 0, 0)
+        flyBV.Parent = root
+    else
+        if flyBV then
+            flyBV:Destroy()
+            flyBV = nil
+        end
+    end
+end
+
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -44,35 +62,43 @@ local function noclip(state)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-        humanoid.PlatformStand = true   -- FLY / MELAYANG
+        humanoid.PlatformStand = true
         humanoid.Sit = false
+        setFly(true)
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
         humanoid.PlatformStand = false
+        setFly(false)
     end
 end
 
--- ===== TURUN TIPIS (PAKAI TWEEN) =====
+-- =====================================================
+-- ===== GERAK =====
+-- =====================================================
+
 local function goDown()
-    local targetY = root.Position.Y + KEDALAMAN_TURUN
-    local targetCF = CFrame.new(root.Position.X, targetY, root.Position.Z)
-    local tween = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCF})
-    tween:Play()
-    tween.Completed:Wait()
+    local targetY = root.Position.Y + BAWAH_Y
+    for i = 1, 15 do
+        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 15)
+        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+        task.wait(0.03)
+    end
+    root.CFrame = CFrame.new(root.Position.X, targetY, root.Position.Z)
 end
 
--- ===== NAIK TIPIS (PAKAI TWEEN) =====
 local function goUp(targetPos)
     local targetY = targetPos.Y + 0.3
-    local targetCF = CFrame.new(targetPos.X, targetY, targetPos.Z)
-    local tween = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCF})
-    tween:Play()
-    tween.Completed:Wait()
+    local startY = root.Position.Y
+    for i = 1, 15 do
+        local newY = startY + (targetY - startY) * (i / 15)
+        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
+        task.wait(0.03)
+    end
+    root.CFrame = CFrame.new(root.Position.X, targetY, root.Position.Z)
 end
 
--- ===== JALAN DEFAULT =====
 local function walkTo(pos)
     humanoid.WalkSpeed = 16
     humanoid:MoveTo(pos)
@@ -81,16 +107,18 @@ local function walkTo(pos)
     end
 end
 
--- ===== TRAVEL =====
 local function travelTo(targetPos)
-    noclip(true)                      -- NOCLIP TOTAL + FLY
-    goDown()                          -- TURUN TIPIS
+    noclip(true)
+    goDown()
     walkTo(Vector3.new(targetPos.X, root.Position.Y, targetPos.Z))
-    goUp(targetPos)                   -- NAIK TIPIS
+    goUp(targetPos)
     noclip(false)
 end
 
+-- =====================================================
 -- ===== INVENTORY =====
+-- =====================================================
+
 local function getItemFromInventory(itemName)
     for _, v in pairs(player.Backpack:GetChildren()) do
         if v:IsA("Tool") and v.Name:lower():find(itemName:lower()) then
@@ -117,7 +145,10 @@ local function equipItem(itemName)
     return false
 end
 
+-- =====================================================
 -- ===== INTERACT =====
+-- =====================================================
+
 local function pressE()
     local bestPrompt = nil
     local bestDist = math.huge
@@ -145,7 +176,10 @@ local function pressE()
     return false
 end
 
+-- =====================================================
 -- ===== DIALOG =====
+-- =====================================================
+
 local function clickDialog()
     task.wait(0.5)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -202,7 +236,10 @@ local function clickExit()
     return false
 end
 
+-- =====================================================
 -- ===== PROMPT APART =====
+-- =====================================================
+
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
@@ -298,7 +335,10 @@ local function sellMarshmallows()
     end
 end
 
+-- =====================================================
 -- ===== MAIN LOOP =====
+-- =====================================================
+
 local function startFarm()
     if isRunning then return end
     isRunning = true
@@ -336,6 +376,7 @@ end
 -- =====================================================
 -- ===== UI RINGAN =====
 -- =====================================================
+
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AF"
 screenGui.ResetOnSpawn = false
@@ -414,7 +455,10 @@ btnStart.Font = Enum.Font.GothamBold
 btnStart.BorderSizePixel = 0
 btnStart.Parent = frame
 
+-- =====================================================
 -- ===== UI LOGIC =====
+-- =====================================================
+
 minus.MouseButton1Click:Connect(function()
     if isRunning then return end
     local v = tonumber(angka.Text) or 1
@@ -456,7 +500,10 @@ btnStart.MouseButton1Click:Connect(function()
     end)
 end)
 
+-- =====================================================
 -- ===== TOGGLE UI =====
+-- =====================================================
+
 game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     if p then return end
     if input.KeyCode == Enum.KeyCode.Z then
