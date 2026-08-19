@@ -1,4 +1,4 @@
--- AUTO FARM FULL - FILTER PROMPT (PURCHASE, BUKAN OPEN)
+-- AUTO FARM - VERSI RINGAN (HUD AMAN)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -50,27 +50,26 @@ local function noclip(state)
     end
 end
 
--- ===== GERAK TEMBUS SEDIKIT =====
+-- ===== GERAK =====
 local function goDown()
     local targetY = BAWAH_Y
-    for i = 1, 8 do
-        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 8)
+    for i = 1, 6 do
+        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 6)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.04)
+        task.wait(0.03)
     end
 end
 
 local function goUp(targetPos)
     local startY = root.Position.Y
     local targetY = targetPos.Y + 0.5
-    for i = 1, 8 do
-        local newY = startY + (targetY - startY) * (i / 8)
+    for i = 1, 6 do
+        local newY = startY + (targetY - startY) * (i / 6)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.04)
+        task.wait(0.03)
     end
 end
 
--- ===== JALAN DEFAULT =====
 local function walkTo(pos)
     humanoid.WalkSpeed = 16
     humanoid:MoveTo(pos)
@@ -114,7 +113,7 @@ local function equipItem(itemName)
     return false
 end
 
--- ===== INTERACT (FILTER: ABUIKAN "open") =====
+-- ===== INTERACT (FILTER OPEN) =====
 local function pressE()
     local bestPrompt = nil
     local bestDist = math.huge
@@ -125,7 +124,6 @@ local function pressE()
                 local dist = (parent.Position - root.Position).Magnitude
                 if dist < 10 then
                     local txt = p.ActionText or ""
-                    -- HANYA PROMPT YANG TIDAK MENGANDUNG "open"
                     if not txt:lower():find("open") then
                         if dist < bestDist then
                             bestDist = dist
@@ -200,14 +198,13 @@ local function clickExit()
     return false
 end
 
--- ===== PROMPT APART (KHUSUS PURCHASE, BUKAN OPEN) =====
+-- ===== PROMPT APART =====
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
             local parent = p.Parent
             if parent and parent:IsA("BasePart") and (parent.Position - pos).Magnitude < 25 then
                 local txt = p.ActionText or ""
-                -- HANYA "purchase" / "beli" DAN BUKAN "open"
                 if (txt:lower():find("purchase") or txt:lower():find("beli")) and not txt:lower():find("open") then
                     return parent, p
                 end
@@ -309,7 +306,7 @@ local function startFarm()
         isRunning = false
         return
     end
-    notif("✅ Apartemen dibeli di indeks " .. boughtIndex)
+    notif("✅ Apartemen dibeli")
     task.wait(COOLDOWN)
     
     while isRunning do
@@ -333,81 +330,82 @@ local function stopFarm()
 end
 
 -- =====================================================
--- ===== UI =====
+-- ===== UI RINGAN =====
 -- =====================================================
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AF"
+screenGui.ResetOnSpawn = false
 screenGui.Parent = player.PlayerGui
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 140)
-frame.Position = UDim2.new(0.5, -110, 0.5, -70)
+frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Position = UDim2.new(0.5, -100, 0.5, -60)
 frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-frame.BackgroundTransparency = 0.3
+frame.BackgroundTransparency = 0.5
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
 frame.Parent = screenGui
 
 local title = Instance.new("TextLabel")
-title.Size = UDim2.new(0, 200, 0, 25)
-title.Position = UDim2.new(0.5, -100, 0, 5)
+title.Size = UDim2.new(0, 180, 0, 22)
+title.Position = UDim2.new(0.5, -90, 0, 4)
 title.BackgroundTransparency = 1
 title.Text = "🔥 AUTO FARM"
 title.TextColor3 = Color3.fromRGB(255, 200, 50)
-title.TextSize = 18
+title.TextSize = 16
 title.Font = Enum.Font.GothamBold
 title.Parent = frame
 
 local label = Instance.new("TextLabel")
-label.Size = UDim2.new(0, 180, 0, 18)
-label.Position = UDim2.new(0.5, -90, 0, 32)
+label.Size = UDim2.new(0, 180, 0, 16)
+label.Position = UDim2.new(0.5, -90, 0, 30)
 label.BackgroundTransparency = 1
 label.Text = "PAKET: 1"
 label.TextColor3 = Color3.fromRGB(200, 200, 255)
-label.TextSize = 13
+label.TextSize = 12
 label.Font = Enum.Font.Gotham
 label.Parent = frame
 
 local minus = Instance.new("TextButton")
-minus.Size = UDim2.new(0, 35, 0, 30)
-minus.Position = UDim2.new(0.5, -55, 0, 55)
+minus.Size = UDim2.new(0, 30, 0, 26)
+minus.Position = UDim2.new(0.5, -50, 0, 50)
 minus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 minus.Text = "−"
 minus.TextColor3 = Color3.fromRGB(255,255,255)
-minus.TextSize = 20
+minus.TextSize = 18
 minus.Font = Enum.Font.GothamBold
 minus.BorderSizePixel = 0
 minus.Parent = frame
 
 local angka = Instance.new("TextLabel")
-angka.Size = UDim2.new(0, 40, 0, 30)
-angka.Position = UDim2.new(0.5, -20, 0, 55)
+angka.Size = UDim2.new(0, 35, 0, 26)
+angka.Position = UDim2.new(0.5, -17, 0, 50)
 angka.BackgroundColor3 = Color3.fromRGB(25, 25, 50)
 angka.Text = "1"
 angka.TextColor3 = Color3.fromRGB(255,255,255)
-angka.TextSize = 18
+angka.TextSize = 16
 angka.Font = Enum.Font.GothamBold
 angka.Parent = frame
 
 local plus = Instance.new("TextButton")
-plus.Size = UDim2.new(0, 35, 0, 30)
-plus.Position = UDim2.new(0.5, 20, 0, 55)
+plus.Size = UDim2.new(0, 30, 0, 26)
+plus.Position = UDim2.new(0.5, 20, 0, 50)
 plus.BackgroundColor3 = Color3.fromRGB(40, 40, 70)
 plus.Text = "+"
 plus.TextColor3 = Color3.fromRGB(255,255,255)
-plus.TextSize = 20
+plus.TextSize = 18
 plus.Font = Enum.Font.GothamBold
 plus.BorderSizePixel = 0
 plus.Parent = frame
 
 local btnStart = Instance.new("TextButton")
-btnStart.Size = UDim2.new(0, 140, 0, 30)
-btnStart.Position = UDim2.new(0.5, -70, 0, 95)
+btnStart.Size = UDim2.new(0, 120, 0, 28)
+btnStart.Position = UDim2.new(0.5, -60, 0, 85)
 btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
 btnStart.Text = "▶ START"
 btnStart.TextColor3 = Color3.fromRGB(255,255,255)
-btnStart.TextSize = 14
+btnStart.TextSize = 13
 btnStart.Font = Enum.Font.GothamBold
 btnStart.BorderSizePixel = 0
 btnStart.Parent = frame
@@ -446,7 +444,7 @@ btnStart.MouseButton1Click:Connect(function()
     btnStart.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
     task.spawn(function()
         local ok, err = pcall(startFarm)
-        if not ok then notif("❌ Error: " .. tostring(err)) end
+        if not ok then notif("❌ Error") end
         if not isRunning then
             btnStart.Text = "▶ START"
             btnStart.BackgroundColor3 = Color3.fromRGB(0, 200, 80)
@@ -462,4 +460,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     end
 end)
 
-notif("✅ Auto Farm FULL siap! Tekan Z toggle UI.")
+notif("✅ Auto Farm siap! Tekan Z toggle UI.")
