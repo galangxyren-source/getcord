@@ -1,13 +1,14 @@
--- AUTO FARM - TURUN SANGAT TIPIS (0.05)
+-- AUTO FARM - GERAK TUBUH PENUH (TWEEN)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
+local TweenService = game:GetService("TweenService")
 
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local KEDALAMAN_TURUN = -0.050   -- SANGAT TIPIS (0.05 stud)
+local KEDALAMAN_TURUN = -0.05   -- TIPIS (sesuai permintaan)
 
 local locations = {
     {apart = Vector3.new(898.89, 9.98, 75.52), cook = Vector3.new(898.62, 10.09, 38.48)},
@@ -32,7 +33,7 @@ local function notif(text)
     game.StarterGui:SetCore("SendNotification", {Title = "Auto Farm", Text = text, Duration = 4})
 end
 
--- ===== NOCLIP + FLY =====
+-- ===== NOCLIP + FLY (SEMUA BAGIAN TUBUH) =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -50,24 +51,22 @@ local function noclip(state)
     end
 end
 
--- ===== GERAK TURUN SANGAT TIPIS =====
+-- ===== TURUN TIPIS (PAKAI TWEEN) =====
 local function goDown()
     local targetY = root.Position.Y + KEDALAMAN_TURUN
-    for i = 1, 10 do
-        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 10)
-        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.02)
-    end
+    local targetCF = CFrame.new(root.Position.X, targetY, root.Position.Z)
+    local tween = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCF})
+    tween:Play()
+    tween.Completed:Wait()
 end
 
+-- ===== NAIK TIPIS (PAKAI TWEEN) =====
 local function goUp(targetPos)
-    local startY = root.Position.Y
     local targetY = targetPos.Y + 0.3
-    for i = 1, 10 do
-        local newY = startY + (targetY - startY) * (i / 10)
-        root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.02)
-    end
+    local targetCF = CFrame.new(targetPos.X, targetY, targetPos.Z)
+    local tween = TweenService:Create(root, TweenInfo.new(0.3, Enum.EasingStyle.Linear), {CFrame = targetCF})
+    tween:Play()
+    tween.Completed:Wait()
 end
 
 -- ===== JALAN DEFAULT =====
@@ -79,6 +78,7 @@ local function walkTo(pos)
     end
 end
 
+-- ===== TRAVEL (TURUN + JALAN + NAIK) =====
 local function travelTo(targetPos)
     noclip(true)
     goDown()
@@ -114,7 +114,7 @@ local function equipItem(itemName)
     return false
 end
 
--- ===== INTERACT (FILTER OPEN) =====
+-- ===== INTERACT =====
 local function pressE()
     local bestPrompt = nil
     local bestDist = math.huge
