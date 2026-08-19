@@ -1,4 +1,4 @@
--- FULL AUTO FARM (TURUN SEDIKIT 0.3)
+-- AUTO FARM FULL - FILTER PROMPT (PURCHASE, BUKAN OPEN)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -7,9 +7,8 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local BAWAH_Y = -0.3   -- <--- TURUN SANGAT SEDIKIT
+local BAWAH_Y = -0.3
 
--- ===== PASANGAN APARTEMEN & TEMPAT MASAK =====
 local locations = {
     {apart = Vector3.new(898.89, 9.98, 75.52), cook = Vector3.new(898.62, 10.09, 38.48)},
     {apart = Vector3.new(926.92, 10.09, 74.98), cook = Vector3.new(927.05, 10.09, 39.27)},
@@ -33,7 +32,7 @@ local function notif(text)
     game.StarterGui:SetCore("SendNotification", {Title = "Auto Farm", Text = text, Duration = 4})
 end
 
--- ===== NOCLIP =====
+-- ===== NOCLIP + FLY =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -63,7 +62,7 @@ end
 
 local function goUp(targetPos)
     local startY = root.Position.Y
-    local targetY = targetPos.Y + 0.5   -- naik hanya 0.5 stud di atas permukaan
+    local targetY = targetPos.Y + 0.5
     for i = 1, 8 do
         local newY = startY + (targetY - startY) * (i / 8)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
@@ -115,16 +114,31 @@ local function equipItem(itemName)
     return false
 end
 
--- ===== INTERACT =====
+-- ===== INTERACT (FILTER: ABUIKAN "open") =====
 local function pressE()
+    local bestPrompt = nil
+    local bestDist = math.huge
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
             local parent = p.Parent
-            if parent and parent:IsA("BasePart") and (parent.Position - root.Position).Magnitude < 10 then
-                p:Hold(0.5)
-                return true
+            if parent and parent:IsA("BasePart") then
+                local dist = (parent.Position - root.Position).Magnitude
+                if dist < 10 then
+                    local txt = p.ActionText or ""
+                    -- HANYA PROMPT YANG TIDAK MENGANDUNG "open"
+                    if not txt:lower():find("open") then
+                        if dist < bestDist then
+                            bestDist = dist
+                            bestPrompt = p
+                        end
+                    end
+                end
             end
         end
+    end
+    if bestPrompt then
+        bestPrompt:Hold(0.5)
+        return true
     end
     return false
 end
@@ -186,14 +200,15 @@ local function clickExit()
     return false
 end
 
--- ===== PROMPT APART =====
+-- ===== PROMPT APART (KHUSUS PURCHASE, BUKAN OPEN) =====
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
             local parent = p.Parent
             if parent and parent:IsA("BasePart") and (parent.Position - pos).Magnitude < 25 then
                 local txt = p.ActionText or ""
-                if txt:lower():find("purchase") or txt:lower():find("beli") then
+                -- HANYA "purchase" / "beli" DAN BUKAN "open"
+                if (txt:lower():find("purchase") or txt:lower():find("beli")) and not txt:lower():find("open") then
                     return parent, p
                 end
             end
