@@ -1,4 +1,4 @@
--- AUTO FARM - TEMBUS TOTAL + FLY PASTI
+-- AUTO FARM - TEMBUS + FLY (TANPA BODYVELOCITY)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -33,25 +33,8 @@ local function notif(text)
 end
 
 -- =====================================================
--- ===== NOCLIP TOTAL + FLY (PAKAI BODYVELOCITY) =====
+-- ===== NOCLIP TOTAL + FLY =====
 -- =====================================================
-local flyBV = nil
-
-local function setFly(state)
-    if state then
-        if flyBV then flyBV:Destroy() end
-        flyBV = Instance.new("BodyVelocity")
-        flyBV.MaxForce = Vector3.new(0, 1e6, 0)
-        flyBV.Velocity = Vector3.new(0, 0, 0)
-        flyBV.Parent = root
-    else
-        if flyBV then
-            flyBV:Destroy()
-            flyBV = nil
-        end
-    end
-end
-
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -62,49 +45,45 @@ local function noclip(state)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-        humanoid.PlatformStand = true
+        humanoid.PlatformStand = true   -- FLY
         humanoid.Sit = false
-        setFly(true)
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
         humanoid.PlatformStand = false
-        setFly(false)
     end
 end
 
 -- =====================================================
 -- ===== GERAK =====
 -- =====================================================
-
 local function goDown()
     local targetY = root.Position.Y + BAWAH_Y
-    for i = 1, 15 do
-        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 15)
+    for i = 1, 10 do
+        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 10)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
         task.wait(0.03)
     end
-    root.CFrame = CFrame.new(root.Position.X, targetY, root.Position.Z)
 end
 
 local function goUp(targetPos)
     local targetY = targetPos.Y + 0.3
     local startY = root.Position.Y
-    for i = 1, 15 do
-        local newY = startY + (targetY - startY) * (i / 15)
+    for i = 1, 10 do
+        local newY = startY + (targetY - startY) * (i / 10)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
         task.wait(0.03)
     end
-    root.CFrame = CFrame.new(root.Position.X, targetY, root.Position.Z)
 end
 
 local function walkTo(pos)
-    humanoid.WalkSpeed = 16
+    humanoid.WalkSpeed = 20
     humanoid:MoveTo(pos)
     while (root.Position - pos).Magnitude > 5 do
         task.wait(0.2)
     end
+    humanoid.WalkSpeed = 16
 end
 
 local function travelTo(targetPos)
@@ -118,7 +97,6 @@ end
 -- =====================================================
 -- ===== INVENTORY =====
 -- =====================================================
-
 local function getItemFromInventory(itemName)
     for _, v in pairs(player.Backpack:GetChildren()) do
         if v:IsA("Tool") and v.Name:lower():find(itemName:lower()) then
@@ -148,7 +126,6 @@ end
 -- =====================================================
 -- ===== INTERACT =====
 -- =====================================================
-
 local function pressE()
     local bestPrompt = nil
     local bestDist = math.huge
@@ -179,7 +156,6 @@ end
 -- =====================================================
 -- ===== DIALOG =====
 -- =====================================================
-
 local function clickDialog()
     task.wait(0.5)
     for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -239,7 +215,6 @@ end
 -- =====================================================
 -- ===== PROMPT APART =====
 -- =====================================================
-
 local function getPurchasePrompt(pos)
     for _, p in pairs(workspace:GetDescendants()) do
         if p:IsA("ProximityPrompt") and p.Enabled == true then
@@ -258,7 +233,6 @@ end
 -- =====================================================
 -- ===== FUNGSI FARM =====
 -- =====================================================
-
 local function buyApartment()
     for i, loc in ipairs(locations) do
         local part, prompt = getPurchasePrompt(loc.apart)
@@ -284,22 +258,18 @@ end
 
 local function cookOne(cookCoord)
     travelTo(cookCoord)
-    
     if equipItem("Water") then
         pressE()
         task.wait(math.random(23, 25))
     end
-    
     if equipItem("Sugar Block Bag") then
         pressE()
         task.wait(4)
     end
-    
     if equipItem("Gelatin") then
         pressE()
         task.wait(math.random(47, 50))
     end
-    
     if equipItem("Empty Bag") then
         pressE()
         task.wait(1)
@@ -310,10 +280,8 @@ local function sellMarshmallows()
     travelTo(NPC_COORD)
     pressE()
     clickDialog()
-    
     local marshmallows = {"Small marshmallow bag", "Medium marshmallow bag", "Large marshmallow bag"}
     local soldAny = false
-    
     while true do
         local found = false
         for _, name in ipairs(marshmallows) do
@@ -325,25 +293,18 @@ local function sellMarshmallows()
                 break
             end
         end
-        if not found then
-            break
-        end
+        if not found then break end
     end
-    
-    if soldAny then
-        clickExit()
-    end
+    if soldAny then clickExit() end
 end
 
 -- =====================================================
 -- ===== MAIN LOOP =====
 -- =====================================================
-
 local function startFarm()
     if isRunning then return end
     isRunning = true
     notif("🔥 Auto Farm dimulai!")
-    
     boughtIndex = buyApartment()
     if not boughtIndex then
         notif("⚠️ Tidak ada apartemen kosong!")
@@ -352,17 +313,14 @@ local function startFarm()
     end
     notif("✅ Apartemen dibeli")
     task.wait(COOLDOWN)
-    
     while isRunning do
         buyMaterials(jumlahPaket)
         task.wait(COOLDOWN)
-        
         local cookCoord = locations[boughtIndex].cook
         for i = 1, jumlahPaket do
             cookOne(cookCoord)
         end
         task.wait(COOLDOWN)
-        
         sellMarshmallows()
         task.wait(COOLDOWN)
     end
@@ -376,7 +334,6 @@ end
 -- =====================================================
 -- ===== UI RINGAN =====
 -- =====================================================
-
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "AF"
 screenGui.ResetOnSpawn = false
@@ -455,10 +412,6 @@ btnStart.Font = Enum.Font.GothamBold
 btnStart.BorderSizePixel = 0
 btnStart.Parent = frame
 
--- =====================================================
--- ===== UI LOGIC =====
--- =====================================================
-
 minus.MouseButton1Click:Connect(function()
     if isRunning then return end
     local v = tonumber(angka.Text) or 1
@@ -499,10 +452,6 @@ btnStart.MouseButton1Click:Connect(function()
         end
     end)
 end)
-
--- =====================================================
--- ===== TOGGLE UI =====
--- =====================================================
 
 game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     if p then return end
