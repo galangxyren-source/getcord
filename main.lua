@@ -1,4 +1,4 @@
--- AUTO FARM - GERAK TUBUH PENUH (TWEEN)
+-- AUTO FARM - TURUN TIPIS + NOCLIP TOTAL + FLY
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -33,7 +33,7 @@ local function notif(text)
     game.StarterGui:SetCore("SendNotification", {Title = "Auto Farm", Text = text, Duration = 4})
 end
 
--- ===== NOCLIP + FLY (SEMUA BAGIAN TUBUH) =====
+-- ===== NOCLIP TOTAL + FLY =====
 local function noclip(state)
     for _, v in pairs(character:GetDescendants()) do
         if v:IsA("BasePart") then
@@ -43,10 +43,13 @@ local function noclip(state)
     if state then
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        humanoid.PlatformStand = true
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+        humanoid.PlatformStand = true   -- FLY / MELAYANG
+        humanoid.Sit = false
     else
         humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
         humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
         humanoid.PlatformStand = false
     end
 end
@@ -78,12 +81,12 @@ local function walkTo(pos)
     end
 end
 
--- ===== TRAVEL (TURUN + JALAN + NAIK) =====
+-- ===== TRAVEL =====
 local function travelTo(targetPos)
-    noclip(true)
-    goDown()
+    noclip(true)                      -- NOCLIP TOTAL + FLY
+    goDown()                          -- TURUN TIPIS
     walkTo(Vector3.new(targetPos.X, root.Position.Y, targetPos.Z))
-    goUp(targetPos)
+    goUp(targetPos)                   -- NAIK TIPIS
     noclip(false)
 end
 
