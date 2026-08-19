@@ -1,4 +1,4 @@
--- AUTO FARM - VERSI RINGAN (HUD AMAN)
+-- AUTO FARM - TURUN SANGAT TIPIS (0.05)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -7,7 +7,7 @@ local root = character:WaitForChild("HumanoidRootPart")
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
 local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
-local BAWAH_Y = -0.3
+local KEDALAMAN_TURUN = -0.05   -- SANGAT TIPIS (0.05 stud)
 
 local locations = {
     {apart = Vector3.new(898.89, 9.98, 75.52), cook = Vector3.new(898.62, 10.09, 38.48)},
@@ -50,26 +50,27 @@ local function noclip(state)
     end
 end
 
--- ===== GERAK =====
+-- ===== GERAK TURUN SANGAT TIPIS =====
 local function goDown()
-    local targetY = BAWAH_Y
-    for i = 1, 6 do
-        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 6)
+    local targetY = root.Position.Y + KEDALAMAN_TURUN
+    for i = 1, 10 do
+        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 10)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.03)
+        task.wait(0.02)
     end
 end
 
 local function goUp(targetPos)
     local startY = root.Position.Y
-    local targetY = targetPos.Y + 0.5
-    for i = 1, 6 do
-        local newY = startY + (targetY - startY) * (i / 6)
+    local targetY = targetPos.Y + 0.3
+    for i = 1, 10 do
+        local newY = startY + (targetY - startY) * (i / 10)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.03)
+        task.wait(0.02)
     end
 end
 
+-- ===== JALAN DEFAULT =====
 local function walkTo(pos)
     humanoid.WalkSpeed = 16
     humanoid:MoveTo(pos)
@@ -81,7 +82,7 @@ end
 local function travelTo(targetPos)
     noclip(true)
     goDown()
-    walkTo(Vector3.new(targetPos.X, BAWAH_Y, targetPos.Z))
+    walkTo(Vector3.new(targetPos.X, root.Position.Y, targetPos.Z))
     goUp(targetPos)
     noclip(false)
 end
