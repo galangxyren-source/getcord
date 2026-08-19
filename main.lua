@@ -1,4 +1,4 @@
--- FULL AUTO FARM (BELI APART SEKALI, LOOP BAHAN→MASAK→JUAL)
+-- FULL AUTO FARM (TURUN SEDIKIT 0.3)
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
@@ -6,8 +6,8 @@ local root = character:WaitForChild("HumanoidRootPart")
 
 -- ===== KONFIGURASI =====
 local COOLDOWN = 2
-local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)   -- tempat beli bahan & jual
-local BAWAH_Y = -1
+local NPC_COORD = Vector3.new(510.56, 3.58, 598.88)
+local BAWAH_Y = -0.3   -- <--- TURUN SANGAT SEDIKIT
 
 -- ===== PASANGAN APARTEMEN & TEMPAT MASAK =====
 local locations = {
@@ -21,7 +21,7 @@ local locations = {
 
 local isRunning = false
 local jumlahPaket = 1
-local boughtIndex = nil   -- indeks apartemen yang sudah dibeli
+local boughtIndex = nil
 
 -- ===== HAPUS GUI LAMA =====
 for _, gui in pairs(player.PlayerGui:GetChildren()) do
@@ -51,27 +51,27 @@ local function noclip(state)
     end
 end
 
--- ===== GERAK TEMBUS =====
+-- ===== GERAK TEMBUS SEDIKIT =====
 local function goDown()
     local targetY = BAWAH_Y
-    for i = 1, 10 do
-        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 10)
+    for i = 1, 8 do
+        local newY = root.Position.Y + (targetY - root.Position.Y) * (i / 8)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.05)
+        task.wait(0.04)
     end
 end
 
 local function goUp(targetPos)
     local startY = root.Position.Y
-    local targetY = targetPos.Y + 2
-    for i = 1, 10 do
-        local newY = startY + (targetY - startY) * (i / 10)
+    local targetY = targetPos.Y + 0.5   -- naik hanya 0.5 stud di atas permukaan
+    for i = 1, 8 do
+        local newY = startY + (targetY - startY) * (i / 8)
         root.CFrame = CFrame.new(root.Position.X, newY, root.Position.Z)
-        task.wait(0.05)
+        task.wait(0.04)
     end
 end
 
--- ===== JALAN DEFAULT (MOVETO) =====
+-- ===== JALAN DEFAULT =====
 local function walkTo(pos)
     humanoid.WalkSpeed = 16
     humanoid:MoveTo(pos)
@@ -206,12 +206,11 @@ end
 -- ===== FUNGSI FARM =====
 -- =====================================================
 
--- 1. BELI APARTEMEN (hanya sekali)
 local function buyApartment()
     for i, loc in ipairs(locations) do
         local part, prompt = getPurchasePrompt(loc.apart)
         if part and prompt then
-            local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 2, 0)
+            local target = part.Position + part.CFrame.LookVector * 3 + Vector3.new(0, 1.5, 0)
             travelTo(target)
             prompt:Hold(1.5)
             return i
@@ -220,7 +219,6 @@ local function buyApartment()
     return nil
 end
 
--- 2. BELI BAHAN
 local function buyMaterials(amount)
     travelTo(NPC_COORD)
     pressE()
@@ -231,7 +229,6 @@ local function buyMaterials(amount)
     clickExit()
 end
 
--- 3. MASAK (1 siklus) di cookCoord
 local function cookOne(cookCoord)
     travelTo(cookCoord)
     
@@ -256,7 +253,6 @@ local function cookOne(cookCoord)
     end
 end
 
--- 4. JUAL MARSHMALLOW (loop sampai habis)
 local function sellMarshmallows()
     travelTo(NPC_COORD)
     pressE()
@@ -292,7 +288,6 @@ local function startFarm()
     isRunning = true
     notif("🔥 Auto Farm dimulai!")
     
-    -- BELI APARTEMEN SEKALI
     boughtIndex = buyApartment()
     if not boughtIndex then
         notif("⚠️ Tidak ada apartemen kosong!")
@@ -302,7 +297,6 @@ local function startFarm()
     notif("✅ Apartemen dibeli di indeks " .. boughtIndex)
     task.wait(COOLDOWN)
     
-    -- LOOP: BELI BAHAN → MASAK → JUAL
     while isRunning do
         buyMaterials(jumlahPaket)
         task.wait(COOLDOWN)
@@ -403,9 +397,7 @@ btnStart.Font = Enum.Font.GothamBold
 btnStart.BorderSizePixel = 0
 btnStart.Parent = frame
 
--- =====================================================
 -- ===== UI LOGIC =====
--- =====================================================
 minus.MouseButton1Click:Connect(function()
     if isRunning then return end
     local v = tonumber(angka.Text) or 1
@@ -447,9 +439,7 @@ btnStart.MouseButton1Click:Connect(function()
     end)
 end)
 
--- =====================================================
 -- ===== TOGGLE UI =====
--- =====================================================
 game:GetService("UserInputService").InputBegan:Connect(function(input, p)
     if p then return end
     if input.KeyCode == Enum.KeyCode.Z then
